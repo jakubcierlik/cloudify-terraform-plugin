@@ -104,7 +104,8 @@ class Terraform(object):
     @property
     def provider(self):
         if self._provider:
-            return utils.create_provider_string(self._provider)
+            return utils.create_provider_string(
+                self._provider.get('providers', {}))
 
     @staticmethod
     def convert_bools_in_env(env):
@@ -137,7 +138,10 @@ class Terraform(object):
         utils.dump_file(self.backend, self.root_module, 'backend.tf')
 
     def put_provider(self):
-        utils.dump_file(self.provider, self.root_module, 'provider.tf')
+        if self.provider:
+            utils.dump_file(self.provider,
+                            self.root_module,
+                            self._provider.get('filename', 'provider.tf'))
 
     @contextmanager
     def runtime_file(self, command):

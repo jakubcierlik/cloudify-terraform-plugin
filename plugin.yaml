@@ -71,12 +71,14 @@ data_types:
 
   cloudify.types.terraform.Provider:
     properties:
-      name:
+      filename:
         type: string
         description: Some name.
         required: False
-      options:
-        description: Should be a dictionary of key/values.
+        default: provider.tf
+      providers:
+        type: list
+        description: "A list of providers with { name: string, options: dict } structure"
         required: False
 
   cloudify.types.terraform.SourceSpecification:
@@ -116,11 +118,11 @@ data_types:
           and you want to use a specific backend, define that here.
         default: {}
       provider:
-        type: list
+        type: cloudify.types.terraform.Provider
         description: >
           If a provider is not defined in source,
           and you want to use a specific provider, define that here in a list.
-        default: []
+        default: {}
       variables:
         description: A dictionary of variables.
         required: false
