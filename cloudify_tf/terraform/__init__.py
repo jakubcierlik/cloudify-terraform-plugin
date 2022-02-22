@@ -279,15 +279,6 @@ class Terraform(object):
         if output:
             return json.loads(output)
 
-    def show_plain_text(self, plan_file_path=None):
-        options = ['show', '-no-color']
-        if plan_file_path:
-            options.append(plan_file_path)
-        command = self._tf_command(options)
-        output = self.execute(command, False)
-        if output:
-            return json.loads(output)
-
     def plan_and_show(self):
         """
         Execute terraform plan,
@@ -296,17 +287,6 @@ class Terraform(object):
         with tempfile.NamedTemporaryFile() as plan_file:
             self.plan(plan_file.name)
             return self.show(plan_file.name)
-
-    def plan_and_show_two_formats(self):
-        """
-        Execute terraform plan,
-        then terraform show on the generated tfplan file
-        """
-        with tempfile.NamedTemporaryFile() as plan_file:
-            self.plan(plan_file.name)
-            json_result = self.show(plan_file.name)
-            plain_text_result = self.show_plain_text(plan_file.name)
-            return json_result, plain_text_result
 
     def plan_and_show_state(self):
         """

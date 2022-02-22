@@ -152,11 +152,10 @@ def plan(ctx,
     if source or source_path:
         with utils.update_terraform_source(source, source_path) as tf_src:
             tf = Terraform.from_ctx(ctx, tf_src)
-            json_result, plain_text_result = _plan(tf)
+            result = _plan(tf)
     else:
-        json_result, plain_text_result = _plan(tf)
-    ctx.instance.runtime_properties['plan'] = json_result
-    ctx.instance.runtime_properties['plain_text_plan'] = plain_text_result
+        result = _plan(tf)
+    ctx.instance.runtime_properties['plan'] = result
 
 
 @operation
