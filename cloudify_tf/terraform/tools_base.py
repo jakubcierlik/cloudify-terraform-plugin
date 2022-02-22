@@ -190,11 +190,14 @@ class TFTool(object):
         return sdk_utils.unzip_and_set_permissions(archive, destination)
 
     def uninstall_binary(self):
-        self.validate()
-        if self.node_instance_directory not in self._executable_path or \
-                not os.path.exists(self._executable_path):
-            return
-        os.remove(self._executable_path)
+        try:
+            self.validate()
+            if self.node_instance_directory not in self._executable_path or \
+                    not os.path.exists(self._executable_path):
+                return
+            os.remove(self._executable_path)
+        except Exception:
+            pass
 
     def validate(self):
         raise NotImplementedError('Should be implemented by subclass.')

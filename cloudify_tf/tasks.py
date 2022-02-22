@@ -236,7 +236,8 @@ def destroy(ctx, tf, **_):
                              'last_source_location',
                              'resource_config']:
         ctx.instance.runtime_properties.pop(runtime_property, None)
-    tf.tflint.uninstall_binary()
+    if tf.tflint:
+        tf.tflint.uninstall_binary()
 
 
 def _destroy(tf):
