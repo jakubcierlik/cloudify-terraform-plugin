@@ -1,4 +1,5 @@
 0.18.10:
+  - TFSec
   - RD-4036 Store both JSON and User Friendly plan output in runtime properties
 0.18.9: TFLint
 0.18.8:

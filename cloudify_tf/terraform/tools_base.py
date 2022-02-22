@@ -221,8 +221,8 @@ class TFTool(object):
                         os.rename(file, executable_path)
             if not found:
                 return results
-        else:
-            os.rename(target, executable_path)
+        # else:
+        #     os.rename(target, executable_path)
         sdk_utils.set_permissions(executable_path)
         return executable_path
 
