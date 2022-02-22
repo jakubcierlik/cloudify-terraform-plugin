@@ -255,6 +255,8 @@ node_types:
           implementation: tf.cloudify_tf.tasks.destroy
         pull:
           implementation: tf.cloudify_tf.tasks.state_pull
+        check_drift:
+          implementation: tf.cloudify_tf.tasks.check_drift
       terraform:
         pull:
           implementation: tf.cloudify_tf.tasks.state_pull

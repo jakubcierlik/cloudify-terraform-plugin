@@ -26,8 +26,9 @@ from cloudify.mocks import (MockContext, MockCloudifyContext,
                             MockNodeContext)
 
 from . import TestBase
-from ..tasks import (install,
-                     apply,
+from ..tasks import (apply,
+                     install,
+                     check_drift,
                      setup_tflint,
                      set_directory_config)
 from ..utils import RELATIONSHIP_INSTANCE
@@ -340,3 +341,75 @@ class TestPlugin(TestBase):
         mock_dep_dir.return_value = mkdtemp()
         apply(ctx=ctx)
         mock_tflint.assert_called()
+
+    @patch('cloudify_tf.utils._unzip_archive')
+    @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
+    @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
+    @patch('cloudify_tf.utils.get_node_instance_dir',
+           return_value=test_dir3)
+    @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
+           return_value=False)
+    def test_check_drift(self, *_):
+        conf = self.get_terraform_module_conf_props(test_dir3)
+        ctx = self.mock_ctx("test_check_drift", conf)
+        current_ctx.set(ctx=ctx)
+        kwargs = {
+            'ctx': ctx
+        }
+        resource_name = "example_vpc"
+        vpc_change = {
+            "actions": ["no-op"],
+            "before": {
+                "arn": "fake_arn",
+                "cidr_block": "10.10.0.0/16"
+            },
+            "after": {
+                "arn": "fake_arn",
+                "cidr_block": "10.10.0.0/16"
+            },
+            "after_unknown": {}
+        }
+        mock_plan_and_show = {
+            "format_version": "0.1",
+            "terraform_version": "0.13.4",
+            "variables": {},
+            "planned_values": {},
+            "resource_changes": [
+                {
+                    "address": "aws_vpc.example_vpc",
+                    "mode": "managed",
+                    "type": "aws_vpc",
+                    "name": resource_name,
+                    "provider_name": "registry.terraform.io/hashicorp/aws",
+                    "change": vpc_change
+                }
+            ],
+            "prior_state": {},
+            "configuration": {}
+        }
+
+        tf_pulled_resources = {
+            'resources': [
+                {
+                    'name': 'eip',
+                    'value': '10.0.0.1'
+                }
+            ]
+        }
+        tf_output = {}
+        mock_tf_apply = Mock()
+        mock_tf_apply.init.return_value = 'terraform initialized folder'
+        mock_tf_apply.plan.return_value = 'terraform plan'
+        mock_tf_apply.apply.return_value = 'terraform executing'
+        mock_tf_apply.state_pull.return_value = tf_pulled_resources
+        mock_tf_apply.show.return_value = tf_pulled_resources
+        mock_tf_apply.output.return_value = tf_output
+        mock_tf_apply.plan_and_show.return_value = mock_plan_and_show
+
+        with patch('cloudify_tf.terraform.Terraform.from_ctx',
+                   return_value=mock_tf_apply):
+            check_drift(**kwargs)
+            assert ctx.abort_operation.called_once_with(
+                'The cloudify.nodes.terraform.Module node instance {} '
+                'has no drifts.'.format(ctx.instance.id)
+            )

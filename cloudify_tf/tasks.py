@@ -24,6 +24,7 @@ from cloudify_common_sdk.utils import get_node_instance_dir, install_binary
 
 from . import utils
 from ._compat import mkdir_p
+from .constants import IS_DRIFTED, DRIFTS
 from .decorators import (
     with_terraform,
     skip_if_existing)
@@ -173,6 +174,21 @@ def check_status(ctx, tf, **_):
         ctx.returns(
             'The cloudify.nodes.terraform.Module node template {} '
             'has no status problems.'.format(ctx.instance.id))
+
+
+@operation
+@with_terraform
+def check_drift(ctx, tf, **_):
+    _state_pull(tf)
+    if not ctx.instance.runtime_properties.get(IS_DRIFTED, False):
+        ctx.logger.info(
+            'The cloudify.nodes.terraform.Module node instance {} '
+            'has no drifts.'.format(ctx.instance.id))
+        return
+    ctx.logger.error(
+        'The cloudify.nodes.terraform.Module node instance {} '
+        'has drifts.'.format(ctx.instance.id))
+    return ctx.instance.runtime_properties[DRIFTS]
 
 
 @operation
