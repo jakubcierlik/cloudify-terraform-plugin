@@ -148,9 +148,10 @@ data_types:
         required: false
       flags_override:
         type: list
-        description:
-        default:
-          ['--debug']
+        description: 'tfsec can by run with no arguments and will act on the current folder.
+          For a richer experience, there are many additional command line arguments that you can make use of.
+          For example: [ "debug", "run-statistics"] (without --)'
+        default: []
 
 
   cloudify.types.terraform.tflint:
@@ -271,7 +272,7 @@ node_types:
           implementation: tf.cloudify_tf.tasks.check_status
       cloudify.interfaces.lifecycle:
         create:
-          implementation: tf.cloudify_tf.tasks.setup_tflint
+          implementation: tf.cloudify_tf.tasks.setup_linters
         configure:
           implementation: tf.cloudify_tf.tasks.apply
         start:

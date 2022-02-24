@@ -29,14 +29,22 @@ from .decorators import (
     with_terraform,
     skip_if_existing)
 from .terraform import Terraform
+from .terraform.tfsec import TFSecException
+from .terraform.tflint import TFLintException
 
 
 @operation
 @with_terraform
-def setup_tflint(ctx, tf, **_):
-    tf.tflint.validate()
-    ctx.instance.runtime_properties['tflint_config'] = \
-        tf.tflint.export_config()
+def setup_linters(ctx, tf, **_):
+    if tf.tflint:
+        tf.tflint.validate()
+        ctx.instance.runtime_properties['tflint_config'] = \
+            tf.tflint.export_config()
+
+    if tf.tfsec:
+        tf.tfsec.validate()
+        ctx.instance.runtime_properties['tfsec_config'] = \
+            tf.tfsec.export_config()
 
 
 @operation
@@ -57,8 +65,12 @@ def apply(ctx, tf, force=False, **kwargs):
     else:
         old_plan = ctx.instance.runtime_properties.get('plan')
         _apply(tf, old_plan, force)
-    ctx.instance.runtime_properties['tflint_config'] = \
-        tf.tflint.export_config()
+        if tf.tflint:
+            ctx.instance.runtime_properties['tflint_config'] = \
+                tf.tflint.export_config()
+        if tf.tfsec:
+            ctx.instance.runtime_properties['tfsec_config'] = \
+                tf.tfsec.export_config()
 
 
 class FailedPlanValidation(NonRecoverableError):
@@ -82,10 +94,11 @@ def _apply(tf, old_plan=None, force=False):
             compare_plan_results(new_plan, old_plan, force)
         if not force:
             tf.check_tflint()
+            tf.check_tfsec()
         tf.apply()
         tf_state = tf.show()
         tf_output = tf.output()
-    except FailedPlanValidation:
+    except (FailedPlanValidation, TFSecException, TFLintException):
         raise
     except FileNotFoundError as ex:
         _, _, tb = sys.exc_info()
@@ -94,6 +107,7 @@ def _apply(tf, old_plan=None, force=False):
             causes=[exception_to_error_cause(ex, tb)])
     except Exception as ex:
         _, _, tb = sys.exc_info()
+        tf.logger.error(str(exception_to_error_cause(ex, tb)))
         raise NonRecoverableError(
             "Failed applying",
             causes=[exception_to_error_cause(ex, tb)])
@@ -238,6 +252,8 @@ def destroy(ctx, tf, **_):
         ctx.instance.runtime_properties.pop(runtime_property, None)
     if tf.tflint:
         tf.tflint.uninstall_binary()
+    if tf.tfsec:
+        tf.tfsec.uninstall_binary()
 
 
 def _destroy(tf):

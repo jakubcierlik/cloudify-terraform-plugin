@@ -53,6 +53,7 @@ class Terraform(object):
         self.additional_args = additional_args
         self._version = version
         self._tflint = None
+        self._tfsec = None
 
         if not isinstance(environment_variables, dict):
             raise Exception(
@@ -195,6 +196,14 @@ class Terraform(object):
     @tflint.setter
     def tflint(self, value):
         self._tflint = value
+
+    @property
+    def tfsec(self):
+        return self._tfsec
+
+    @tfsec.setter
+    def tfsec(self, value):
+        self._tfsec = value
 
     def init(self, command_line_args=None):
         cmdline = ['init', '-no-color', '-input=false']
@@ -397,3 +406,12 @@ class Terraform(object):
         commands = []
         with self.runtime_file(commands):
             self.tflint.tflint(commands[-1])
+
+    def check_tfsec(self):
+        if not hasattr(self, 'tfsec') or not self.tfsec:
+            return
+        self.tfsec.validate()
+        self.tfsec.terraform_root_module = self.root_module
+        commands = []
+        with self.runtime_file(commands):
+            self.tfsec.tfsec()

@@ -29,7 +29,7 @@ from . import TestBase
 from ..tasks import (apply,
                      install,
                      check_drift,
-                     setup_tflint,
+                     setup_linters,
                      set_directory_config)
 from ..utils import RELATIONSHIP_INSTANCE
 from ..terraform import Terraform
@@ -244,14 +244,16 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.decorators.get_terraform_source')
     @patch('cloudify_tf.terraform.tflint.TFLint.validate')
     @patch('cloudify_tf.terraform.tflint.TFLint.export_config')
+    @patch('cloudify_tf.terraform.tfsec.TFSec.validate')
+    @patch('cloudify_tf.terraform.tfsec.TFSec.export_config')
     @patch('cloudify_tf.terraform.tools_base.sdk_utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
-    def test_setup_tflint(self,
-                          mock_node_dir,
-                          mock_dep_dir,
-                          mock_export,
-                          mock_valid,
-                          *_):
+    def test_setup_linters(self,
+                           mock_node_dir,
+                           mock_dep_dir,
+                           mock_export,
+                           mock_valid,
+                           *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
         conf.update({
             "tflint_config": {
@@ -270,7 +272,13 @@ class TestPlugin(TestBase):
                 'env': {
                     'foo': 'bar'
                 },
-
+            },
+            "tfsec_config": {
+                'installation_source': 'installation_source_tfsec',
+                'executable_path': 'executable_path_tfsec',
+                'config': {},
+                'flags_override': [],
+                'env': {},
             },
         })
         ctx = self.mock_ctx("test_apply_with_output", conf)
@@ -278,7 +286,7 @@ class TestPlugin(TestBase):
         current_ctx.set(ctx=ctx)
         mock_node_dir.return_value = mkdtemp()
         mock_dep_dir.return_value = mkdtemp()
-        setup_tflint(ctx=ctx)
+        setup_linters(ctx=ctx)
         mock_valid.assert_called_once()
         mock_export.assert_called_once()
 
@@ -341,6 +349,47 @@ class TestPlugin(TestBase):
         mock_dep_dir.return_value = mkdtemp()
         apply(ctx=ctx)
         mock_tflint.assert_called()
+
+    @patch('cloudify_tf.terraform.Terraform.init')
+    @patch('cloudify_tf.terraform.Terraform.plan_and_show')
+    @patch('cloudify_tf.terraform.Terraform.apply')
+    @patch('cloudify_tf.terraform.Terraform.show')
+    @patch('cloudify_tf.terraform.Terraform.output')
+    @patch('cloudify_tf.terraform.tfsec.TFSec.validate')
+    @patch('cloudify_tf.terraform.tools_base.TFTool.execute')
+    @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
+    @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
+    @patch('cloudify_tf.terraform.tools_base.TFTool.install_binary')
+    @patch('cloudify_tf.terraform.Terraform.version')
+    @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
+    @patch('cloudify_tf.decorators.get_terraform_source')
+    @patch('cloudify_tf.terraform.Terraform.runtime_file')
+    @patch('cloudify_tf.terraform.tools_base.sdk_utils.get_deployment_dir')
+    @patch('cloudify_tf.utils.get_node_instance_dir')
+    @patch('cloudify_tf.terraform.tfsec.TFSec.tfsec')
+    def test_apply_check_tfsec(self,
+                               mock_tfsec,
+                               mock_node_dir,
+                               mock_dep_dir,
+                               mock_runtime_file,
+                               *_):
+        conf = self.get_terraform_module_conf_props(test_dir3)
+        conf.update({
+            "tfsec_config": {
+                'installation_source': 'installation_source_tfsec',
+                'executable_path': 'executable_path_tfsec',
+                'config': {},
+                'flags_override': [],
+                'env': {},
+            },
+        })
+        ctx = self.mock_ctx("test_apply_with_output", conf)
+        ctx.instance._id = 'foo'
+        current_ctx.set(ctx=ctx)
+        mock_node_dir.return_value = mkdtemp()
+        mock_dep_dir.return_value = mkdtemp()
+        apply(ctx=ctx)
+        mock_tfsec.assert_called()
 
     @patch('cloudify_tf.utils._unzip_archive')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)

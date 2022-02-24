@@ -1,7 +1,9 @@
-from os import path, remove
+import json
+import shutil
+from os import path
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
-from subprocess import Popen, PIPE, STDOUT
+
 
 from cloudify.exceptions import NonRecoverableError
 
@@ -142,7 +144,7 @@ class TFSec(TFTool):
 
     @staticmethod
     def from_ctx(_ctx):
-        tfsec_config = get_tfsec_config()(
+        tfsec_config = get_tfsec_config(
             _ctx.node.properties, _ctx.instance.runtime_properties)
         return TFSec(
             _ctx.logger,
@@ -152,16 +154,14 @@ class TFSec(TFTool):
 
     @contextmanager
     def configfile(self):
-        with NamedTemporaryFile() as tfsec_cfg:
+        with NamedTemporaryFile(mode="w+", delete=False) as f:
             if self.config:
-                tfsec_cfg.write(self.config.encode('utf-8'))
-                tfsec_cfg.flush()
+                json.dump(self.config, f)
+                f.flush()
+                shutil.move(f.name, self.terraform_root_module+'/config.json')
                 try:
-                    yield tfsec_cfg.name
+                    yield 'config.json'
                 except Exception:
-                    tfsec_cfg.flush()
-                    if path.exists(tfsec_cfg.name):
-                        remove(tfsec_cfg.name)
                     raise
             else:
                 try:
@@ -169,15 +169,14 @@ class TFSec(TFTool):
                 except Exception:
                     raise
 
-    def tfsec(self, variable_file=None):
+    def tfsec(self):
         with self.configfile() as config_file:
-            basic_commands = ['.', '--no-color', ]
+            basic_commands = ['.', '--no-color', '--format', 'json']
+
             if config_file:
-                basic_commands.extend(['--config', config_file])
-            if variable_file:
-                basic_commands.extend(['--var-file', variable_file])
-            command = self.merged_args(
-                self.flags, basic_commands)
+                basic_commands.extend(['--config-file', config_file])
+
+            command = self.merged_args(self.flags, basic_commands)
             command.insert(0, self.executable_path)
             return self.execute(command, self.terraform_root_module, self.env,
                                 return_output=False)
@@ -186,20 +185,16 @@ class TFSec(TFTool):
         return {
             'installation_source': self.installation_source,
             'executable_path': self.executable_path,
-            '_executable_path': self._executable_path,
-            '__executable_path': self.__executable_path,
             'config': self._config_from_props,
             'flags_override': self._flags_from_props,
             'env': self.env,
         }
 
-    def execute(self, command, *args, **kwargs):
-        process = Popen(command, stdout=PIPE, stderr=STDOUT)
-        with process.stdout:
-            for line in iter(process.stdout.readline, b''):
-                self.logger.info(line.decode('utf-8'))
-        exitcode = process.wait()
-        if exitcode:
+    def execute(self, command, cwd, env, return_output=True, *args, **kwargs):
+        try:
+            self._execute(
+                command, cwd, env, kwargs, return_output=return_output)
+        except Exception:
             raise TFSecException(
                 'TFsec error. See above log for more information. '
                 'If you are working in a development environment, '
@@ -211,9 +206,9 @@ class TFSec(TFTool):
 
 
 def get_tfsec_config(node_props, instance_props):
-    tfsec_config = instance_props.get('config', {})
+    tfsec_config = instance_props.get('tfsec_config', {})
     if not tfsec_config:
-        tfsec_config = node_props['config']
+        tfsec_config = node_props['tfsec_config']
     return tfsec_config
 
 
