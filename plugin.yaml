@@ -131,6 +131,14 @@ data_types:
         description: A dictionary of environment variables.
         required: false
         default: {}
+      flags_override:
+        type: list
+        description: |
+          If you wish to add or modify flags, configure here.
+          # A list of flag elements. Strings will be appended to the command.
+          # Dicts will be translated to bash key=vars.
+          # For example, "{'loglevel': 'debug'}", becomes "--loglevel=debug".
+        required: true
 
   cloudify.types.terraform.tfsec:
     properties:
