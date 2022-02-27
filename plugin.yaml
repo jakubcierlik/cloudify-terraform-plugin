@@ -2,7 +2,7 @@ plugins:
   tf:
     executor: central_deployment_agent
     package_name: cloudify-terraform-plugin
-    package_version: '0.18.10'
+    package_version: '0.18.11'
 
 dsl_definitions:
 
@@ -138,7 +138,11 @@ data_types:
           # A list of flag elements. Strings will be appended to the command.
           # Dicts will be translated to bash key=vars.
           # For example, "{'loglevel': 'debug'}", becomes "--loglevel=debug".
-        required: true
+        default: []
+      log_stdout:
+        type: boolean
+        default: true
+        description: Set to false, if you wish to suppress stdout logging for apply and plan commands.
 
   cloudify.types.terraform.tfsec:
     properties:

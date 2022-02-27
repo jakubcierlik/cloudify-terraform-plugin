@@ -45,15 +45,16 @@ class Terraform(CliTool):
                  provider_upgrade=False,
                  additional_args=None,
                  version=None,
-                 flags_override=None):
+                 flags_override=None,
+                 log_stdout=True):
 
         try:
             deployment_name = root_module.split('/')[-2]
             node_instance_name = root_module.split('/')[-1]
         except (IndexError, AttributeError):
             logger.info('Invalid root module: {}'.format(root_module))
-            raise RuntimeError(
-                'A valid deployment name or node instance name was not found.')
+            deployment_name = None
+            node_instance_name = None
 
         super().__init__(logger, deployment_name, node_instance_name)
 
@@ -66,6 +67,7 @@ class Terraform(CliTool):
         self.additional_args = additional_args
         self._version = version
         self._flags_override = flags_override or []
+        self._log_stdout = log_stdout
         self._tflint = None
         self._tfsec = None
 
@@ -106,16 +108,6 @@ class Terraform(CliTool):
             self._env = new_value
 
     @property
-    def flags(self):
-        if not self._flags_override:
-            return []
-        elif not isinstance(self._flags_override):
-            raise RuntimeError(
-                'The flags_override parameter is not a list: '
-                'It is type: {}. Provided value: {}'.format(
-                    type(self._flags_override), self._flags_override))
-
-    @property
     def variables(self):
         return self._variables
 
@@ -151,7 +143,8 @@ class Terraform(CliTool):
             return
         return path
 
-    def execute(self, command, return_output=True):
+    def execute(self, command, return_output=None):
+        return_output = return_output or self._log_stdout
         return run_subprocess(
             command,
             self.logger,
@@ -427,6 +420,7 @@ class Terraform(CliTool):
                 additional_args=general_executor_process,
                 version=terraform_version,
                 flags_override=flags_override,
+                log_stdout=resource_config.get('log_stdout', True)
         )
         tf.put_backend()
         tf.put_provider()

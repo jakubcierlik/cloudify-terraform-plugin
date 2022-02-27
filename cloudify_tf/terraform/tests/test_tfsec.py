@@ -54,7 +54,7 @@ def test_installation_source(tfsec_params):
     assert tfsec_obj.installation_source == TFSEC_URL
 
 
-@patch('cloudify_tf.terraform.tools_base.sdk_utils.get_deployment_dir')
+@patch('cloudify_common_sdk.cli_tool_base.sdk_utils.get_deployment_dir')
 def test_executable_path(get_deployment_dir_sdk, tfsec_params):
     ctx = MockCloudifyContext(
         'test',
@@ -82,7 +82,7 @@ def test_executable_path(get_deployment_dir_sdk, tfsec_params):
         shutil.rmtree(deployment_dir)
 
 
-@patch('cloudify_tf.terraform.tools_base.sdk_utils')
+@patch('cloudify_common_sdk.cli_tool_base.sdk_utils')
 def test_validation(sdk_utils_mock, tfsec_params):
     download_file_mock = MagicMock()
     get_deployment_dir_mock = MagicMock(return_value='foo')

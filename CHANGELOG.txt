@@ -1,3 +1,4 @@
+0.18.11: Quiet mode.
 0.18.10:
   - TFSec
   - RD-4036 Store both JSON and User Friendly plan output in runtime properties

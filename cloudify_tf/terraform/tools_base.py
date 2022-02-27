@@ -49,4 +49,3 @@ class TFTool(CliTool):
             args[index + 1] = flags.pop(flag_index + 1)
         args.extend(flags)
         return args
-
