@@ -277,7 +277,8 @@ node_types:
       tfsec_config:
         type: cloudify.types.terraform.tfsec
         required: false
-
+      terratag_config:
+        default: {}
     interfaces:
       cloudify.interfaces.validation:
         check_status:

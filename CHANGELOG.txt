@@ -1,7 +1,8 @@
-0.18.11: Quiet mode.
-0.18.10:
+0.18.11:
+  - Quiet mode.
   - TFSec
   - RD-4036 Store both JSON and User Friendly plan output in runtime properties
+0.18.10: Intermediate release
 0.18.9: TFLint
 0.18.8:
   - RD-4037 Expose force param for reload template.
