@@ -246,7 +246,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.tflint.TFLint.export_config')
     @patch('cloudify_tf.terraform.tfsec.TFSec.validate')
     @patch('cloudify_tf.terraform.tfsec.TFSec.export_config')
-    @patch('cloudify_tf.terraform.tools_base.sdk_utils.get_deployment_dir')
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
     def test_setup_linters(self,
                            mock_node_dir,
@@ -304,7 +304,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
     @patch('cloudify_tf.decorators.get_terraform_source')
     @patch('cloudify_tf.terraform.Terraform.runtime_file')
-    @patch('cloudify_tf.terraform.tools_base.sdk_utils.get_deployment_dir')
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
     @patch('cloudify_tf.terraform.tflint.TFLint.tflint')
     def test_apply_check_tflint(self,
@@ -364,7 +364,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
     @patch('cloudify_tf.decorators.get_terraform_source')
     @patch('cloudify_tf.terraform.Terraform.runtime_file')
-    @patch('cloudify_tf.terraform.tools_base.sdk_utils.get_deployment_dir')
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
     @patch('cloudify_tf.terraform.tfsec.TFSec.tfsec')
     def test_apply_check_tfsec(self,

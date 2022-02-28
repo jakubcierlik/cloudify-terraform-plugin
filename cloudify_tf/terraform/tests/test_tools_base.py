@@ -77,7 +77,7 @@ def test_format_log(get_tf_tools_params):
     assert tool.format_log('foo') == 'test_format_log: foo'
 
 
-@patch('cloudify_tf.terraform.tools_base.sdk_utils')
+@patch('cloudify_common_sdk.cli_tool_base.sdk_utils')
 def test_properties(sdk_utils_mock, get_tf_tools_params):
     args, kwargs, info, error = get_tf_tools_params
     sdk_utils_mock.get_deployment_dir.return_value = '/foo'
