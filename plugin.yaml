@@ -2,7 +2,7 @@ plugins:
   tf:
     executor: central_deployment_agent
     package_name: cloudify-terraform-plugin
-    package_version: '0.18.15'
+    package_version: '0.18.16'
 
 dsl_definitions:
 
@@ -431,3 +431,11 @@ workflows:
         type: boolean
         description: Force apply without matching previous plan.
         default: false
+
+  update_terraform_binary:
+    mapping: tf.cloudify_tf.workflows.update_terraform_binary
+    parameters:
+      <<: *terraform_workflow_params
+      installation_source:
+        type: string
+        description: The URL to downlowd the new binary from.
