@@ -388,7 +388,6 @@ def get_storage_path(target=False):
             'is no longer supported.')
     instance = get_ctx_instance(target=target)
     instance.runtime_properties['storage_path'] = deployment_dir
-    instance.update()
     return deployment_dir
 
 

@@ -465,6 +465,14 @@ workflows:
         description: Force apply without matching previous plan.
         default: false
 
+  update_terraform_binary:
+    mapping: tf.cloudify_tf.workflows.update_terraform_binary
+    parameters:
+      <<: *terraform_workflow_params
+      installation_source:
+        type: string
+        description: The URL to downlowd the new binary from.
+
   import_terraform_resource:
     mapping: tf.cloudify_tf.workflows.import_resource
     parameters:

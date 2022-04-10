@@ -331,14 +331,15 @@ def reload_template(ctx,
 
 @operation
 @skip_if_existing
-def install(ctx, **_):
+def install(ctx, installation_source=None, **_):
     installation_dir = get_node_instance_dir()
     executable_path = utils.get_executable_path()
     plugins = utils.get_plugins()
     plugins_dir = utils.get_plugins_dir()
-    installation_source = utils.get_installation_source()
+    installation_source = \
+        installation_source or utils.get_installation_source()
 
-    if os.path.isfile(executable_path):
+    if os.path.isfile(executable_path) and ctx.workflow_id == 'install':
         ctx.logger.info(
             'Terraform executable already found at {path}; '
             'skipping installation of executable'.format(
