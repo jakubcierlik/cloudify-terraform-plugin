@@ -435,3 +435,71 @@ def set_directory_config(ctx, **_):
         resource_plugins_dir
     ctx.source.instance.runtime_properties['storage_path'] = \
         resource_storage_dir
+
+
+def _import_resource(ctx,
+                     tf,
+                     resource_id,
+                     resource_address,
+                     source=None,
+                     source_path=None,
+                     variables=None,
+                     environment_variables=None,
+                     **_):
+
+    _handle_new_vars(ctx.instance.runtime_properties,
+                     tf,
+                     variables,
+                     environment_variables,
+                     update=True)
+
+    if not all([resource_address, resource_id]):
+        raise NonRecoverableError(
+            "A new value for the following parameters must be provided:"
+            " resource_address, resource_id.")
+
+    resource_config = utils.get_resource_config()
+    if not source:
+        source = resource_config.get('source')
+    if not source_path:
+        source_path = resource_config.get('source_path')
+
+    source = utils.handle_previous_source_format(source)
+    with utils.update_terraform_source(source,
+                                       source_path) as terraform_source:
+        new_tf = Terraform.from_ctx(ctx, terraform_source)
+        try:
+            new_tf.init()
+            new_tf.import_resource(resource_address, resource_id)
+            _state_pull(new_tf)
+        except Exception as ex:
+            _, _, tb = sys.exc_info()
+            raise NonRecoverableError(
+                "Failed executing terraform import. ",
+                causes=[exception_to_error_cause(ex, tb)])
+
+
+@operation
+@with_terraform
+def import_resource(ctx,
+                    tf,
+                    resource_id,
+                    resource_address,
+                    source=None,
+                    source_path=None,
+                    variables=None,
+                    environment_variables=None,
+                    **kwargs):
+    """
+    Terraform import resource given resource_address and resource_id as inputs
+    """
+
+    _import_resource(ctx,
+                     tf,
+                     resource_id,
+                     resource_address,
+                     source,
+                     source_path,
+                     variables,
+                     environment_variables,
+                     **kwargs)
