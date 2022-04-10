@@ -399,6 +399,13 @@ class Terraform(CliTool):
         command = self._tf_command(options)
         return self.execute(command)
 
+    def import_resource(self, resource_address, resource_id):
+        options = ['import', '-no-color']
+        with self.runtime_file(options):
+            options.extend([resource_address, resource_id])
+            command = self._tf_command(options)
+            return self.execute(command)
+
     @staticmethod
     def from_ctx(ctx, terraform_source, skip_tf=False):
         try:
