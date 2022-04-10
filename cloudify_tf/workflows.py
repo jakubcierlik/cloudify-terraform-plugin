@@ -84,6 +84,33 @@ def reload_resources(ctx,
         **kwargs).execute()
 
 
+def import_resource(ctx,
+                    node_ids,
+                    node_instance_ids,
+                    source,
+                    source_path,
+                    variables,
+                    environment_variables,
+                    resource_address,
+                    resource_id):
+    kwargs = dict(resource_address=resource_address)
+    kwargs['resource_id'] = resource_id
+    if source:
+        kwargs['source'] = source
+    if source_path:
+        kwargs['source_path'] = source_path
+    if variables:
+        kwargs['variables'] = variables
+    if environment_variables:
+        kwargs['environment_variables'] = environment_variables
+    _terraform_operation(
+        ctx,
+        "terraform.import_resource",
+        node_ids,
+        node_instance_ids,
+        **kwargs).execute()
+
+
 def terraform_plan(ctx,
                    node_ids=None,
                    node_instance_ids=None,
