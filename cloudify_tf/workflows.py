@@ -244,7 +244,7 @@ def _update_terraform_binary(instance, sequence, kwargs):
 def _set_deployment_directory_rel(instance, sequence, kwargs):
     sequence.add(
         instance.execute_operation(
-            'cloudify.interfaces.relationship_lifecycle.preconfigure',
+            PRECONFIGURE,
             kwargs=kwargs,
             allow_kwargs_override=True
         )
