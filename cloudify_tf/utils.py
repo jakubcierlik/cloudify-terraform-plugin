@@ -608,9 +608,8 @@ def try_to_copy_old_state_file(target_dir):
     p = ctx.instance.runtime_properties.get(
         'previous_tf_state_file')
 
-    target_file = os.path.join(target_dir, os.path.basename(p))
-
     if p and os.path.exists(p) and os.stat(p).st_size:
+        target_file = os.path.join(target_dir, os.path.basename(p))
         try:
             os.symlink(p, target_file)
         except OSError:
