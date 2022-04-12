@@ -66,7 +66,7 @@ class Terraform(CliTool):
 
         self.binary_path = binary_path
         self.plugins_dir = self.set_plugins_dir(plugins_dir)
-        self.root_module = root_module
+        self._root_module = root_module
         self.logger = logger
         self.additional_args = additional_args
         self._version = version
@@ -93,6 +93,15 @@ class Terraform(CliTool):
         self._provider = provider
         self._variables = variables
         self.provider_upgrade = provider_upgrade
+
+    @property
+    def root_module(self):
+        return self._root_module
+
+    @root_module.setter
+    def root_module(self, value):
+        self._root_module = value
+        utils.try_to_copy_old_state_file(value)
 
     @property
     def flags(self):
