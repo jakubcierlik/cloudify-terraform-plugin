@@ -27,7 +27,6 @@ from .constants import IS_DRIFTED, DRIFTS
 from .decorators import (
     with_terraform,
     skip_if_existing)
-from .terraform import Terraform
 from .terraform.tools_base import TFToolException
 
 
@@ -155,13 +154,20 @@ def plan(ctx,
                      environment_variables)
 
     if source or source_path:
-        with utils.update_terraform_source(source, source_path) as tf_src:
-            tf = Terraform.from_ctx(ctx, tf_src)
-            json_result, plain_text_result = _plan(tf)
-    else:
-        json_result, plain_text_result = _plan(tf)
+        tf.root_module = utils.update_terraform_source(source, source_path)
+    json_result, plain_text_result = _plan(tf)
     ctx.instance.runtime_properties['plan'] = json_result
     ctx.instance.runtime_properties['plain_text_plan'] = plain_text_result
+    resource_config = utils.get_resource_config()
+    resource_config.update(
+        {
+            'source': source,
+            'source_path': source_path
+        }
+    )
+    ctx.instance.runtime_properties['resource_config'] = resource_config
+    ctx.instance.runtime_properties['previous_tf_state_file'] = \
+        utils.get_terraform_state_file(tf.root_module)
 
 
 @operation
@@ -293,14 +299,19 @@ def _reload_template(ctx,
     source = utils.handle_previous_source_format(source)
     if destroy_previous:
         destroy(tf=tf, ctx=ctx)
-    with utils.update_terraform_source(source,
-                                       source_path) as terraform_source:
-        new_tf = Terraform.from_ctx(ctx, terraform_source)
-        old_plan = ctx.instance.runtime_properties.get('plan')
-        _apply(new_tf, old_plan, force)
-        ctx.instance.runtime_properties['resource_config'] = \
-            utils.get_resource_config()
-        _state_pull(new_tf)
+    tf.root_module = utils.update_terraform_source(source, source_path)
+    old_plan = ctx.instance.runtime_properties.get('plan')
+    _apply(tf, old_plan, force)
+    resource_config.update(
+        {
+            'source': source,
+            'source_path': source_path
+        }
+    )
+    ctx.instance.runtime_properties['resource_config'] = resource_config
+    _state_pull(tf)
+    ctx.instance.runtime_properties['previous_tf_state_file'] = \
+        utils.get_terraform_state_file(tf.root_module)
 
 
 @operation
@@ -465,18 +476,25 @@ def _import_resource(ctx,
         source_path = resource_config.get('source_path')
 
     source = utils.handle_previous_source_format(source)
-    with utils.update_terraform_source(source,
-                                       source_path) as terraform_source:
-        new_tf = Terraform.from_ctx(ctx, terraform_source)
-        try:
-            new_tf.init()
-            new_tf.import_resource(resource_address, resource_id)
-            _state_pull(new_tf)
-        except Exception as ex:
-            _, _, tb = sys.exc_info()
-            raise NonRecoverableError(
-                "Failed executing terraform import. ",
-                causes=[exception_to_error_cause(ex, tb)])
+    tf.root_module = utils.update_terraform_source(source, source_path)
+    resource_config.update(
+        {
+            'source': source,
+            'source_path': source_path
+        }
+    )
+    ctx.instance.runtime_properties['resource_config'] = resource_config
+    ctx.instance.runtime_properties['previous_tf_state_file'] = \
+        utils.get_terraform_state_file(tf.root_module)
+    try:
+        tf.init()
+        tf.import_resource(resource_address, resource_id)
+        _state_pull(tf)
+    except Exception as ex:
+        _, _, tb = sys.exc_info()
+        raise NonRecoverableError(
+            "Failed executing terraform import. ",
+            causes=[exception_to_error_cause(ex, tb)])
 
 
 @operation
