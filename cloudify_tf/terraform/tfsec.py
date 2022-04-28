@@ -191,8 +191,11 @@ class TFSec(TFTool):
 
     def execute(self, command, cwd, env, return_output=True, *args, **kwargs):
         try:
-            self._execute(
+            self.logger.info('command: {}'.format(command))
+
+            output = self._execute(
                 command, cwd, env, kwargs, return_output=return_output)
+            self.logger.info('output: {}'.format(output))
         except Exception:
             raise TFSecException(
                 'TFsec error. See above log for more information. '
