@@ -18,7 +18,7 @@ import sys
 from cloudify.decorators import operation
 from cloudify import ctx as ctx_from_imports
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-from cloudify.utils import exception_to_error_cause
+from cloudify.utils import exception_to_error_cause, first_merge_in_second
 from cloudify_common_sdk.utils import get_node_instance_dir, install_binary
 
 from . import utils
@@ -28,6 +28,18 @@ from .decorators import (
     with_terraform,
     skip_if_existing)
 from .terraform.tools_base import TFToolException
+from .terraform.tfsec import TFSec
+
+
+@operation
+@with_terraform
+def tfsec(ctx,
+          tf,
+          tfsec_config):
+    original_tfsec_config = ctx.instance.runtime_properties.get(
+        'tfsec_config') or ctx.node.properties.get('tfsec_config')
+    new_config_tfsec = first_merge_in_second(tfsec_config, original_tfsec_config)
+    tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
 
 
 @operation

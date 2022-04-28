@@ -142,8 +142,8 @@ class TFSec(TFTool):
         return self._flags
 
     @staticmethod
-    def from_ctx(_ctx):
-        tfsec_config = get_tfsec_config(
+    def from_ctx(_ctx, tfsec_config=None):
+        tfsec_config = tfsec_config or get_tfsec_config(
             _ctx.node.properties, _ctx.instance.runtime_properties)
         return TFSec(
             _ctx.logger,
