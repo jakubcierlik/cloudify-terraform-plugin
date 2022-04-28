@@ -38,7 +38,8 @@ def tfsec(ctx,
           tfsec_config):
     original_tfsec_config = ctx.instance.runtime_properties.get(
         'tfsec_config') or ctx.node.properties.get('tfsec_config')
-    new_config_tfsec = first_merge_in_second(tfsec_config, original_tfsec_config)
+    new_config_tfsec = first_merge_in_second(tfsec_config,
+                                             original_tfsec_config)
     tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
     tf.check_tfsec()
 
