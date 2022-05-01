@@ -40,8 +40,8 @@ def tfsec(ctx,
           tfsec_config):
     original_tfsec_config = ctx.instance.runtime_properties.get(
         'tfsec_config') or ctx.node.properties.get('tfsec_config')
-    new_config_tfsec = update_dict_values(original_tfsec_config,
-                                                     tfsec_config)
+    new_config_tfsec = update_dict_values(
+        original_tfsec_config, tfsec_config)
     tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
     tf.check_tfsec()
 
@@ -165,18 +165,19 @@ def plan(ctx,
                      variables,
                      environment_variables)
 
+    resource_config = utils.get_resource_config()
     if source or source_path:
         tf.root_module = utils.update_terraform_source(source, source_path)
+        resource_config.update(
+            {
+                'source': source or resource_config.get('source'),
+                'source_path': source_path or resource_config.get(
+                    'source_path')
+            }
+        )
     json_result, plain_text_result = _plan(tf)
     ctx.instance.runtime_properties['plan'] = json_result
     ctx.instance.runtime_properties['plain_text_plan'] = plain_text_result
-    resource_config = utils.get_resource_config()
-    resource_config.update(
-        {
-            'source': source,
-            'source_path': source_path
-        }
-    )
     ctx.instance.runtime_properties['resource_config'] = resource_config
     ctx.instance.runtime_properties['previous_tf_state_file'] = \
         utils.get_terraform_state_file(tf.root_module)
