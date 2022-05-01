@@ -598,7 +598,7 @@ def setup_config_tf(ctx,
                 'Please update.'.format(tf.terraform_version))
     tflint_config = tflint_config or ctx.node.properties.get('tflint_config')
     if tflint_config:
-        if tflint_config.get('enable', False):
+    if tflint_config.get('enable', False):
             tf.tflint = TFLint.from_ctx(_ctx=ctx)
             ctx.instance.runtime_properties['tflint_config'] = \
                 tf.tflint.export_config()
