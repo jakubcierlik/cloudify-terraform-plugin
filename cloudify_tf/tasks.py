@@ -19,7 +19,9 @@ from cloudify.decorators import operation
 from cloudify import ctx as ctx_from_imports
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
-from cloudify_common_sdk.utils import get_node_instance_dir, install_binary
+from cloudify_common_sdk.utils import (get_node_instance_dir,
+                                       install_binary,
+                                       update_dict_values)
 
 from . import utils
 from ._compat import mkdir_p
@@ -38,18 +40,10 @@ def tfsec(ctx,
           tfsec_config):
     original_tfsec_config = ctx.instance.runtime_properties.get(
         'tfsec_config') or ctx.node.properties.get('tfsec_config')
-    new_config_tfsec = first_merge_in_second(tfsec_config,
-                                             original_tfsec_config)
+    new_config_tfsec = update_dict_values(original_tfsec_config,
+                                                     tfsec_config)
     tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
     tf.check_tfsec()
-
-
-# will move to util TODO
-def first_merge_in_second(new, original):
-    if new and original:
-        for key, value in new.items():
-            original[key] = value
-    return original
 
 
 @operation
