@@ -561,7 +561,6 @@ class Terraform(CliTool):
         self.tflint.validate()
         self.tflint.terraform_root_module = self.root_module
         commands = []
-        self.logger.info('** check_tflint- commands:{}'.format(commands))
         with self.runtime_file(commands):
             self.tflint.tflint(commands[-1])
 
