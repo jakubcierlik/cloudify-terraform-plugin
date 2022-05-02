@@ -36,11 +36,12 @@ from .terraform.tflint import TFLint
 
 @operation
 @with_terraform
-def tflint(ctx,
-          tf,
-          tflint_config):
+def tflint(ctx, tf, tflint_config, **_):
+    ctx.logger.info('** tflint_config: {}'.format(tflint_config))
     original_tflint_config = ctx.instance.runtime_properties.get(
         'tflint_config') or ctx.node.properties.get('tflint_config')
+    ctx.logger.info('** original_tflint_config: {}'.format(original_tflint_config))
+
     new_config_tflint = update_dict_values(
         original_tflint_config, tflint_config)
     tf.tflint = TFLint.from_ctx(ctx, new_config_tflint)
@@ -49,9 +50,7 @@ def tflint(ctx,
 
 @operation
 @with_terraform
-def tfsec(ctx,
-          tf,
-          tfsec_config):
+def tfsec(ctx, tf, tfsec_config, **_):
     original_tfsec_config = ctx.instance.runtime_properties.get(
         'tfsec_config') or ctx.node.properties.get('tfsec_config')
     new_config_tfsec = update_dict_values(

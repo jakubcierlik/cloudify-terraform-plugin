@@ -374,7 +374,7 @@ node_types:
         tflint:
           implementation: tf.cloudify_tf.tasks.tflint
           inputs:
-            tfsec_config:
+            tflint_config:
               default: { get_property: [ SELF, tflint_config ] }
         reload:
           # Reloads the Terraform template. By default, the template will be
