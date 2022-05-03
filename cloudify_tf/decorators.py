@@ -52,10 +52,6 @@ def with_terraform(func):
                 'uploading Terraform binaries to the Cloudify manager.')
             return
         with get_terraform_source() as terraform_source:
-            for key, value in kwargs.items():
-                ctx.logger.info('---- kwargs:')
-
-                ctx.logger.info('{key}: {val} '.format(key=key, val=value))
             tf = Terraform.from_ctx(terraform_source=terraform_source,
                                     skip_tf=ctx.operation.name == CREATE_OP,
                                     **kwargs)

@@ -604,13 +604,6 @@ def setup_config_tf(ctx,
         ctx.instance.runtime_properties['tflint_config'] = \
             tf.tflint.export_config()
 
-    # tfsec_config = tfsec_config or ctx.node.properties.get(
-    #     'tfsec_config', {})
-    # if tfsec_config.get('enable', False):
-    #     tf.tfsec = TFSec.from_ctx(_ctx=ctx, tfsec_config=tfsec_config)
-    #     ctx.instance.runtime_properties['tfsec_config'] = \
-    #         tf.tfsec.export_config()
-
     tfsec_config_from_props = ctx.node.properties.get('tfsec_config', {})
     if tfsec_config or tfsec_config_from_props and \
             tfsec_config_from_props.get('enable', False):

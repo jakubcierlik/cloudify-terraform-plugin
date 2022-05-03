@@ -234,9 +234,6 @@ class TFLint(TFTool):
                             return_output=False)
 
     def tflint(self, variable_file=None):
-        self.logger.info('** tflint **')
-        self.logger.info('** variable_file:{}'.format(variable_file))
-
         with self.configfile() as config_file:
             self._init(config_file, variable_file)
             basic_commands = ['--no-color', '--config', config_file]
@@ -259,7 +256,7 @@ class TFLint(TFTool):
 
     def execute(self, command, *args, **kwargs):
         process = Popen(command, stdout=PIPE, stderr=STDOUT)
-        self.logger.info('** execute: command: {}'.format(command))
+        self.logger.info('command: {}'.format(command))
         with process.stdout:
             for line in iter(process.stdout.readline, b''):
                 self.logger.error(line.decode('utf-8'))
