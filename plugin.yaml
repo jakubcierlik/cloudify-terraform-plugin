@@ -384,7 +384,8 @@ node_types:
                 If true, then the plugin destroys the existing Terraform
                 topology before applying the new one.
               type: boolean
-              default: false        check_drift:
+              default: false
+        check_drift:
           implementation: tf.cloudify_tf.tasks.check_drift
       terraform:
         pull:
