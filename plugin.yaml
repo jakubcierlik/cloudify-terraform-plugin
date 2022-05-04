@@ -346,6 +346,8 @@ node_types:
           implementation: tf.cloudify_tf.tasks.setup_linters
         configure:
           implementation: tf.cloudify_tf.tasks.apply
+        update:
+          implementation: tf.cloudify_tf.tasks.apply
         start:
           implementation: tf.cloudify_tf.tasks.state_pull
         delete:
