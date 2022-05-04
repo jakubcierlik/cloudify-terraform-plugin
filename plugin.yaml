@@ -346,15 +346,45 @@ node_types:
           implementation: tf.cloudify_tf.tasks.setup_linters
         configure:
           implementation: tf.cloudify_tf.tasks.apply
-        update:
-          implementation: tf.cloudify_tf.tasks.apply
         start:
           implementation: tf.cloudify_tf.tasks.state_pull
         delete:
           implementation: tf.cloudify_tf.tasks.destroy
         pull:
           implementation: tf.cloudify_tf.tasks.state_pull
-        check_drift:
+        heal: &terraform_heal
+          # Reloads the Terraform template. By default, the template will be
+          # read from the last location it was loaded from.
+          # This can be overridden by specifying the 'source' input.
+          implementation: tf.cloudify_tf.tasks.reload_template
+        update: &terraform_reload
+          <<: *terraform_heal
+          inputs:
+            source:
+              description: >
+                URL or path to a ZIP/tar.gz file or a Git repository to obtain
+                new module source from. If omitted, then the module is reloaded
+                from its last location.
+              type: string
+              default: { get_attribute: [ SELF, last_source_location ] }
+            source_path:
+              type: string
+              description: The path within the source property, where the terraform files may be found.
+              default: { get_property: [ SELF, resource_config, source_path ] }
+            variables:
+              type: dict
+              description: Variables override.
+              default: { get_property: [ SELF, resource_config, variables ] }
+            environment_variables:
+              type: dict
+              description: Environment variables override.
+              default: { get_property: [ SELF, resource_config, environment_variables ] }
+            destroy_previous:
+              description: >
+                If true, then the plugin destroys the existing Terraform
+                topology before applying the new one.
+              type: boolean
+              default: false        check_drift:
           implementation: tf.cloudify_tf.tasks.check_drift
       terraform:
         pull:
@@ -379,36 +409,7 @@ node_types:
             tflint_config:
               default: { get_property: [ SELF, tflint_config ] }
         reload:
-          # Reloads the Terraform template. By default, the template will be
-          # read from the last location it was loaded from.
-          # This can be overridden by specifying the 'source' input.
-          implementation: tf.cloudify_tf.tasks.reload_template
-          inputs:
-            source:
-              description: >
-                URL or path to a ZIP/tar.gz file or a Git repository to obtain
-                new module source from. If omitted, then the module is reloaded
-                from its last location.
-              type: string
-              default: { get_attribute: [ SELF, last_source_location ] }
-            source_path:
-              type: string
-              description: The path within the source property, where the terraform files may be found.
-              default: { get_property: [ SELF, resource_config, source_path ] }
-            variables:
-              type: dict
-              description: Variables override.
-              default: {}
-            environment_variables:
-              type: dict
-              description: Environment variables override.
-              default: {}
-            destroy_previous:
-              description: >
-                If true, then the plugin destroys the existing Terraform
-                topology before applying the new one.
-              type: boolean
-              default: false
+          <<: *terraform_reload
         refresh:
           # Refreshes Terraform's state.
           implementation: tf.cloudify_tf.tasks.state_pull
