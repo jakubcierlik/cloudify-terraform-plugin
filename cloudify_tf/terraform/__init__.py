@@ -623,10 +623,8 @@ def setup_config_tf(ctx,
         tags_from_cfg.update(tags_from_ctx)
         terratag_config['tags'] = tags_from_cfg
 
-    if terratag_config:
-        if terratag_config.get('enable', False):
-            tf.terratag = Terratag.from_ctx(_ctx=ctx)
-            ctx.instance.runtime_properties['terratag_config'] = \
-                tf.terratag.export_config()
-            tf.terratag.terraform_executable = tf.binary_path
-            tf.terratag.validate()
+    if terratag_config and terratag_config.get('enable', False):
+        tf.terratag = Terratag.from_ctx(_ctx=ctx,
+                                        terratag_config=terratag_config)
+        ctx.instance.runtime_properties['terratag_config'] = \
+            tf.terratag.export_config()
