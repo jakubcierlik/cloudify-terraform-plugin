@@ -203,8 +203,8 @@ class Terratag(TFTool):
                                     .format(message=message))
 
     @staticmethod
-    def from_ctx(_ctx):
-        terratag_config = get_terratag_config(
+    def from_ctx(_ctx, terratag_config=None):
+        terratag_config = terratag_config or get_terratag_config(
             _ctx.node.properties, _ctx.instance.runtime_properties)
         return Terratag(
             _ctx.logger,

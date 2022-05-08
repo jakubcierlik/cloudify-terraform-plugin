@@ -32,6 +32,18 @@ from .decorators import (
 from .terraform.tools_base import TFToolException
 from .terraform.tfsec import TFSec
 from .terraform.tflint import TFLint
+from .terraform.terratag import Terratag
+
+
+@operation
+@with_terraform
+def terratag(ctx, tf, terratag_config, **_):
+    original_tflint_config = ctx.instance.runtime_properties.get(
+        'terratag_config') or ctx.node.properties.get('terratag_config')
+    new_terratag_config = update_dict_values(
+        original_tflint_config, terratag_config)
+    tf.terratag = Terratag.from_ctx(ctx, new_terratag_config)
+    tf.run_terratag()
 
 
 @operation
