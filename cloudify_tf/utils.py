@@ -589,11 +589,17 @@ def _yield_terraform_source(material, source_path=None):
     if not material:
         source = get_resource_config().get('source')
         if isinstance(source, str) and os.path.isdir(source):
-            path_to_init_dir = source
+            if source_path:
+                path_to_init_dir = os.path.join(source, source_path)
+            else:
+                path_to_init_dir = source
         elif isinstance(source, dict):
             location = source.get('location')
             if os.path.isdir(location):
-                path_to_init_dir = source
+                if source_path:
+                    path_to_init_dir = os.path.join(location, source_path)
+                else:
+                    path_to_init_dir = location
     if not path_to_init_dir:
         if material:
             extract_binary_tf_data(module_root, material, source_path)
