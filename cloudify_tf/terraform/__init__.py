@@ -210,6 +210,8 @@ class Terraform(CliTool):
         return final_flags
 
     def execute(self, command, return_output=None):
+        self.logger.info('** execute init terraform** ')
+
         return_output = return_output or self._log_stdout
         return run_subprocess(
             command,
