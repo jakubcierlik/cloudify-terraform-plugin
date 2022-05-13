@@ -612,7 +612,21 @@ def setup_config_tf(ctx,
             tf.tfsec.export_config()
 
     terratag_config = terratag_config or ctx.node.properties.get(
-        'terratag_config')
+        'terratag_config', {})
+
+    try:
+        tags_from_ctx = ctx.deployment.resource_tags
+    except AttributeError:
+        pass
+    else:
+        tags_from_cfg = terratag_config.get('tags', [])
+        for i in tags_from_ctx:
+            if i not in tags_from_cfg:
+                tags_from_cfg.append(i)
+        # tags_from_cfg.update(tags_from_ctx)
+        terratag_config['tags'] = tags_from_cfg
+        terratag_config['enable'] = True
+
     if terratag_config:
         if terratag_config.get('enable', False):
             tf.terratag = Terratag.from_ctx(_ctx=ctx)
