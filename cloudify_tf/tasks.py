@@ -44,6 +44,14 @@ def terratag(ctx, tf, terratag_config, **_):
         original_tflint_config, terratag_config)
     tf.terratag = Terratag.from_ctx(ctx, new_terratag_config)
     tf.run_terratag()
+    resource_config = utils.get_resource_config()
+    source = resource_config.get('source')
+    source_path = resource_config.get('source_path')
+    _reload_template(ctx,
+                     tf,
+                     source,
+                     source_path,
+                     **_)
 
 
 @operation

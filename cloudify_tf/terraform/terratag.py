@@ -232,11 +232,8 @@ class Terratag(TFTool):
 
     def execute(self, command, cwd, env, return_output=True, *args, **kwargs):
         try:
-            self.logger.info('** execute terratag** ')
-
-            output = self._execute(
+            self._execute(
                 command, cwd, env, kwargs, return_output=return_output)
-            self.logger.info('** return_output: {}'.format(output))
         except Exception:
             raise TerratagException(
                 'Terratag error. See above log for more information. '

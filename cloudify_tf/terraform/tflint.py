@@ -255,8 +255,6 @@ class TFLint(TFTool):
         }
 
     def execute(self, command, *args, **kwargs):
-        self.logger.info('** execute tflint** ')
-
         process = Popen(command, stdout=PIPE, stderr=STDOUT)
         self.logger.info('command: {}'.format(command))
         with process.stdout:
