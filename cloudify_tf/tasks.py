@@ -83,6 +83,8 @@ def setup_linters(tf, **_):
         tf.tflint.validate()
     if tf.tfsec:
         tf.tfsec.validate()
+    if tf.terratag:
+        tf.terratag.validate()
 
 
 @operation
