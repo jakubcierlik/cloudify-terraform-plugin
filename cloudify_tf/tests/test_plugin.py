@@ -72,6 +72,15 @@ class TestPlugin(TestBase):
 
     def get_terraform_module_conf_props(self, module_root):
         return {
+            "terratag_config": {
+                "installation_source": "https://github.com/env0/terratag/"
+                                       "releases/download/v0.1.35/"
+                                       "terratag_0.1.35_linux_amd64.tar.gz",
+                "executable_path": False,
+                "tags": [],
+                "flags_override": [],
+                "enable": False,
+            },
             "resource_config": {
                 "source": {
                     "location": path.join(module_root, "template"),
@@ -219,6 +228,9 @@ class TestPlugin(TestBase):
             self.assertEqual(ctx.instance.runtime_properties['outputs'],
                              tf_output)
 
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
+    @patch('cloudify_tf.terraform.terratag.Terratag.execute')
+    @patch('cloudify_tf.terraform.terratag.Terratag.executable_path')
     @patch('cloudify_tf.terraform.Terraform.set_plugins_dir')
     @patch('cloudify_tf.terraform.Terraform.version')
     @patch('cloudify_tf.utils.get_executable_path')
@@ -311,6 +323,7 @@ class TestPlugin(TestBase):
         mock_tflint_validate.assert_called_once()
         mock_tflint_export.assert_called_once()
 
+    @patch('cloudify_tf.terraform.terratag.Terratag.execute')
     @patch('cloudify_tf.terraform.Terraform.init')
     @patch('cloudify_tf.terraform.Terraform.plan_and_show')
     @patch('cloudify_tf.terraform.Terraform.apply')
@@ -371,6 +384,7 @@ class TestPlugin(TestBase):
         apply(ctx=ctx)
         mock_tflint.assert_called()
 
+    @patch('cloudify_tf.terraform.terratag.Terratag.execute')
     @patch('cloudify_tf.terraform.Terraform.init')
     @patch('cloudify_tf.terraform.Terraform.plan_and_show')
     @patch('cloudify_tf.terraform.Terraform.apply')
@@ -485,6 +499,7 @@ class TestPlugin(TestBase):
                 'has no drifts.'.format(ctx.instance.id)
             )
 
+    @patch('cloudify_tf.terraform.terratag.Terratag.executable_path')
     @patch('cloudify_tf.terraform.Terraform.set_plugins_dir')
     @patch('cloudify_tf.terraform.Terraform.version')
     @patch('cloudify_tf.terraform.utils.get_executable_path')
@@ -494,7 +509,9 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.utils.get_executable_path')
     @patch('cloudify_tf.terraform.utils.get_executable_path')
     def test_apply_tf_vars(self, *_):
+        _conf = self.get_terraform_module_conf_props(test_dir3)
         conf = {
+            "terratag_config": _conf['terratag_config'],
             "resource_config": {
                 "tfvars": 'val.tfvars'
             }
