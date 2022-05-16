@@ -16,6 +16,7 @@ checkout:
       fi
 
 executors:
+
   py36:
     environment:
       PYENV_VERSION: 3.6.5

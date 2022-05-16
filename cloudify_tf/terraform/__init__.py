@@ -625,7 +625,8 @@ def setup_config_tf(ctx,
                 tags_from_cfg.append(i)
         # tags_from_cfg.update(tags_from_ctx)
         terratag_config['tags'] = tags_from_cfg
-        terratag_config['enable'] = True
+        if terratag_config['tags']:
+            terratag_config['enable'] = True
 
     if terratag_config:
         if terratag_config.get('enable', False):
