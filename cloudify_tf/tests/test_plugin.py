@@ -77,7 +77,7 @@ class TestPlugin(TestBase):
                                        "releases/download/v0.1.35/"
                                        "terratag_0.1.35_linux_amd64.tar.gz",
                 "executable_path": False,
-                "tags": [],
+                "tags": {},
                 "flags_override": [],
                 "enable": False,
             },
@@ -306,7 +306,7 @@ class TestPlugin(TestBase):
             "terratag_config": {
                 'installation_source': 'installation_source_terratag',
                 'executable_path': 'executable_path_terratag',
-                'tags': [{'tag1: value1'}],
+                'tags': {'tag1: value1'},
                 'flags_override': [],
                 'env': {},
                 'enable': True

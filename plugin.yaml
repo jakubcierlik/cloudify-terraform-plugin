@@ -274,6 +274,7 @@ data_types:
         type: dict
         description: # For example: {'id': 'abc', 'user_name': 'my_name'}
         required: false
+        default: {}
       flags_override:
         type: list
         required: false

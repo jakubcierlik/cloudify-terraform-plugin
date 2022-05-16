@@ -286,10 +286,10 @@ data_types:
         description: If the binary is located on the file system, this is the path on the file system.
         required: false
       tags:
-        type: list
+        type: dict
         description: # For example: {'id': 'abc', 'user_name': 'my_name'}
         required: false
-        default: []
+        default: {}
       flags_override:
         type: list
         required: false
