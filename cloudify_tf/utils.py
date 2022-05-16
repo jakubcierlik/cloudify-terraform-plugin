@@ -309,17 +309,12 @@ def update_terraform_source_material(new_source, target=False):
     # check if we actually downloaded something or not
     if source_tmp_path == new_source_location:
         source_tmp_path = _create_source_path(source_tmp_path)
-    else:
-        # move tmp files to correct directory
-        copy_directory(source_tmp_path, node_instance_dir)
-        if os.path.abspath(os.path.dirname(source_tmp_path)) != \
-                os.path.abspath(get_node_instance_dir(target)):
-            remove_dir(source_tmp_path)
+    # move tmp files to correct directory
+    copy_directory(source_tmp_path, node_instance_dir)
     ctx.logger.debug('Source Temp Path {}'.format(source_tmp_path))
     # By getting here we will have extracted source
     # Zip the file to store in runtime
     if not v1_gteq_v2(get_cloudify_version(), "6.0.0"):
-
         terraform_source_zip = _zip_archive(source_tmp_path)
         bytes_source = _file_to_base64(terraform_source_zip)
         os.remove(terraform_source_zip)
@@ -329,6 +324,10 @@ def update_terraform_source_material(new_source, target=False):
             remove_dir(source_tmp_path)
 
         return bytes_source
+    else:
+        if os.path.abspath(os.path.dirname(source_tmp_path)) != \
+                os.path.abspath(get_node_instance_dir(target)):
+            remove_dir(source_tmp_path)
 
 
 def get_terraform_source_material(target=False):

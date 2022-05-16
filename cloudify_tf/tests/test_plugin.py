@@ -161,6 +161,7 @@ class TestPlugin(TestBase):
             ctx.target.instance.runtime_properties.get("executable_path"))
 
     @patch('cloudify_tf.utils._unzip_archive')
+    @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
     @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
     @patch('cloudify_tf.utils.get_node_instance_dir',
@@ -196,6 +197,7 @@ class TestPlugin(TestBase):
                              tf_output)
 
     @patch('cloudify_tf.utils._unzip_archive')
+    @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
     @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
     @patch('cloudify_tf.utils.get_node_instance_dir',
@@ -428,6 +430,7 @@ class TestPlugin(TestBase):
         mock_tfsec.assert_called()
 
     @patch('cloudify_tf.utils._unzip_archive')
+    @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
     @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
     @patch('cloudify_tf.utils.get_node_instance_dir',
@@ -534,6 +537,7 @@ class TestPlugin(TestBase):
         self.assertTrue(expected in result)
 
     @patch('cloudify_tf.utils._unzip_archive')
+    @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
     @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
     @patch('cloudify_tf.utils.get_node_instance_dir',
