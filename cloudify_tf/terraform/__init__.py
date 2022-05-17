@@ -619,18 +619,14 @@ def setup_config_tf(ctx,
     except AttributeError:
         pass
     else:
-        tags_from_cfg = terratag_config.get('tags', [])
-        for i in tags_from_ctx:
-            if i not in tags_from_cfg:
-                tags_from_cfg.append(i)
-        # tags_from_cfg.update(tags_from_ctx)
+        tags_from_cfg = terratag_config.get('tags', {})
+        tags_from_cfg.update(tags_from_ctx)
         terratag_config['tags'] = tags_from_cfg
-        if terratag_config['tags']:
-            terratag_config['enable'] = True
 
     if terratag_config:
         if terratag_config.get('enable', False):
             tf.terratag = Terratag.from_ctx(_ctx=ctx)
             ctx.instance.runtime_properties['terratag_config'] = \
                 tf.terratag.export_config()
+            tf.terratag.terraform_executable = tf.binary_path
             tf.terratag.validate()

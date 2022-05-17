@@ -291,7 +291,9 @@ def get_terraform_config(target=False):
 def update_terraform_source_material(new_source, target=False):
     """Replace the terraform_source material with a new material.
     This is used in terraform.reload_template operation."""
-    ctx.logger.info(new_source)
+    ctx.logger.debug('update_terraform_source_material '
+                     'new_source: {}'.format(new_source))
+    delete_tmp = True
     new_source_location = new_source
     new_source_username = None
     new_source_password = None
@@ -306,12 +308,15 @@ def update_terraform_source_material(new_source, target=False):
         new_source_location, dir=node_instance_dir,
         username=new_source_username,
         password=new_source_password)
+    ctx.logger.debug('Source temp path {}'.format(source_tmp_path))
     # check if we actually downloaded something or not
     if source_tmp_path == new_source_location:
-        source_tmp_path = _create_source_path(source_tmp_path)
+        new_tmp_path = _create_source_path(source_tmp_path)
+        if new_tmp_path == source_tmp_path:
+            delete_tmp = False
+        source_tmp_path = new_tmp_path
     # move tmp files to correct directory
     copy_directory(source_tmp_path, node_instance_dir)
-    ctx.logger.debug('Source Temp Path {}'.format(source_tmp_path))
     # By getting here we will have extracted source
     # Zip the file to store in runtime
     if not v1_gteq_v2(get_cloudify_version(), "6.0.0"):
@@ -320,13 +325,13 @@ def update_terraform_source_material(new_source, target=False):
         os.remove(terraform_source_zip)
 
         if os.path.abspath(os.path.dirname(source_tmp_path)) != \
-                os.path.abspath(get_node_instance_dir(target)):
+                os.path.abspath(node_instance_dir) and delete_tmp:
             remove_dir(source_tmp_path)
 
         return bytes_source
     else:
         if os.path.abspath(os.path.dirname(source_tmp_path)) != \
-                os.path.abspath(get_node_instance_dir(target)):
+                os.path.abspath(node_instance_dir) and delete_tmp:
             remove_dir(source_tmp_path)
 
 
@@ -340,8 +345,9 @@ def get_terraform_source_material(target=False):
     terraform_source = instance.runtime_properties.get('terraform_source')
     resource_config = get_resource_config(target=target)
     source = resource_config.get('source')
-    resource_config.update({'source': source})
-    instance.runtime_properties['resource_config'] = resource_config
+    if not isinstance(source, dict):
+        resource_config.update({'source': source})
+        instance.runtime_properties['resource_config'] = resource_config
     if not terraform_source:
         terraform_source = update_terraform_source_material(
             source, target=target)
@@ -564,17 +570,27 @@ def update_terraform_source(new_source=None, new_source_path=None):
     else:
         # If the plan operation passes NOone, then this would error.
         material = get_terraform_source_material()
+    node_instance_dir = get_node_instance_dir(source_path=new_source_path)
     module_root = get_storage_path()
+    ctx.logger.debug('The storage root tree:\n{}'.format(tree(module_root)))
     if material:
         extract_binary_tf_data(module_root, material, new_source_path)
     else:
         if isinstance(new_source, str) and os.path.isdir(new_source):
-            return new_source
+            if new_source_path:
+                source_tmp_path = os.path.join(new_source, new_source_path)
+            else:
+                source_tmp_path = new_source
+            copy_directory(source_tmp_path, node_instance_dir)
         elif isinstance(new_source, dict) and os.path.isdir(
                 new_source.get('location')):
-            return new_source.get('location')
-    ctx.logger.debug('The storage root tree:\n{}'.format(tree(module_root)))
-    return get_node_instance_dir(source_path=new_source_path)
+            if new_source_path:
+                source_tmp_path = os.path.join(
+                    new_source.get('location'), new_source_path)
+            else:
+                source_tmp_path = new_source.get('location')
+            copy_directory(source_tmp_path, node_instance_dir)
+    return node_instance_dir
 
 
 def _yield_terraform_source(material, source_path=None):
@@ -584,28 +600,13 @@ def _yield_terraform_source(material, source_path=None):
     """
     module_root = get_storage_path()
     source_path = source_path or get_source_path()
-    path_to_init_dir = None
-    if not material:
-        source = get_resource_config().get('source')
-        if isinstance(source, str) and os.path.isdir(source):
-            if source_path:
-                path_to_init_dir = os.path.join(source, source_path)
-            else:
-                path_to_init_dir = source
-        elif isinstance(source, dict):
-            location = source.get('location')
-            if os.path.isdir(location):
-                if source_path:
-                    path_to_init_dir = os.path.join(location, source_path)
-                else:
-                    path_to_init_dir = location
-    if not path_to_init_dir:
-        if material:
-            extract_binary_tf_data(module_root, material, source_path)
-        ctx.logger.debug(
-            'The storage root tree:\n{}'.format(tree(module_root)))
-        path_to_init_dir = get_node_instance_dir(source_path=source_path)
+    if material:
+        extract_binary_tf_data(module_root, material, source_path)
+    ctx.logger.debug(
+        'The storage root tree:\n{}'.format(tree(module_root)))
+    path_to_init_dir = get_node_instance_dir(source_path=source_path)
     try:
+        ctx.logger.debug('_yield_terraform_source {}'.format(path_to_init_dir))
         yield path_to_init_dir
     except Exception as e:
         _, _, tb = sys.exc_info()
@@ -671,9 +672,10 @@ def get_terraform_state_file(target_dir=None):
     if isinstance(target_dir, dict):
         target_dir = target_dir.get('location')
 
-    for p in os.listdir(target_dir):
-        if p.endswith('tfstate'):
-            return os.path.join(target_dir, p)
+    if isinstance(target_dir, str):
+        for p in os.listdir(target_dir):
+            if p.endswith('tfstate'):
+                return os.path.join(target_dir, p)
 
     storage_path = get_storage_path()
     state_file_path = os.path.join(storage_path, TERRAFORM_STATE_FILE)

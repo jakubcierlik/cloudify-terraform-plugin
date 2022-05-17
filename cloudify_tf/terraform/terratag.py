@@ -15,8 +15,9 @@
 # limitations under the License.
 
 import re
+import sys
 import json
-from os import path
+from os import path, environ
 
 from cloudify_common_sdk.utils import install_binary
 
@@ -42,7 +43,8 @@ class Terratag(TFTool):
                  tags=None,
                  flags_override=None,
                  env=None,
-                 enable=False):
+                 enable=False,
+                 terraform_executable=None):
 
         super().__init__(logger, deployment_name, node_instance_name)
         self._installation_source = installation_source
@@ -50,13 +52,14 @@ class Terratag(TFTool):
         self._executable_path = None
         self._tags_from_props = tags or {}
         self._tags = {}
-        self._tags_string = None
+        self._tags_string = ''
         self._flags_from_props = flags_override or []
         self._flags = []
         self._env = env or {}
         self._tool_name = 'terratag'
         self._terraform_root_module = None
         self.enable = enable
+        self._terraform_executable = terraform_executable
 
     @property
     def config_property_name(self):
@@ -69,6 +72,14 @@ class Terratag(TFTool):
     @installation_source.setter
     def installation_source(self, value):
         self._installation_source = value
+
+    @property
+    def terraform_executable(self):
+        return self._terraform_executable
+
+    @terraform_executable.setter
+    def terraform_executable(self, value):
+        self._terraform_executable = value
 
     @property
     def executable_path(self):
@@ -205,6 +216,8 @@ class Terratag(TFTool):
         command = [self.executable_path,
                    self.tags_string,
                    self.flags_string]
+        if path.dirname(self.terraform_executable) not in environ['PATH']:
+            sys.path.append(path.dirname(self.terraform_executable))
         return self.execute(command, self._terraform_root_module, self.env,
                             return_output=False)
 

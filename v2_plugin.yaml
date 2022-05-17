@@ -289,7 +289,7 @@ data_types:
         type: list
         description: # For example: {'id': 'abc', 'user_name': 'my_name'}
         required: false
-        default: []
+        default: {}
       flags_override:
         type: list
         required: false
