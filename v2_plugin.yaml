@@ -286,7 +286,7 @@ data_types:
         description: If the binary is located on the file system, this is the path on the file system.
         required: false
       tags:
-        type: dict
+        type: list
         description: # For example: {'id': 'abc', 'user_name': 'my_name'}
         required: false
         default: {}

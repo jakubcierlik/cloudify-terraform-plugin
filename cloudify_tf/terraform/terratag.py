@@ -59,7 +59,7 @@ class Terratag(TFTool):
         self._tool_name = 'terratag'
         self._terraform_root_module = None
         self.enable = enable
-        self._terraform_executable = None
+        self._terraform_executable = terraform_executable
 
     @property
     def config_property_name(self):
