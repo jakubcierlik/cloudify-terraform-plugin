@@ -347,10 +347,10 @@ def get_terraform_source_material(target=False):
     source = resource_config.get('source')
     if not isinstance(source, dict):
         resource_config.update({'source': source})
-        instance.runtime_properties['resource_config'] = resource_config
     if not terraform_source:
         terraform_source = update_terraform_source_material(
             source, target=target)
+    instance.runtime_properties['resource_config'] = resource_config
     return terraform_source
 
 
