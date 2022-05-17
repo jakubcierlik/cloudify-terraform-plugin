@@ -83,8 +83,6 @@ def apply(ctx, tf, force=False, **kwargs):
     else:
         old_plan = ctx.instance.runtime_properties.get('plan')
         _apply(tf, old_plan, force)
-    ctx.instance.runtime_properties['resource_config'] = \
-        utils.get_resource_config()
 
 
 class FailedPlanValidation(NonRecoverableError):
