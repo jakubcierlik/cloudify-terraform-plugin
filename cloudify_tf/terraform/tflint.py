@@ -192,6 +192,7 @@ class TFLint(TFTool):
     def from_ctx(_ctx, tflint_config=None):
         tflint_config = tflint_config or get_tflint_config(
             _ctx.node.properties, _ctx.instance.runtime_properties)
+        _ctx.logger.debug('Using tflint_config {}'.format(tflint_config))
         return TFLint(
             _ctx.logger,
             _ctx.deployment.id,

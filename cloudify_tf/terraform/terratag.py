@@ -206,6 +206,7 @@ class Terratag(TFTool):
     def from_ctx(_ctx, terratag_config=None):
         terratag_config = terratag_config or get_terratag_config(
             _ctx.node.properties, _ctx.instance.runtime_properties)
+        _ctx.logger.debug('Using terratag_config {}'.format(terratag_config))
         return Terratag(
             _ctx.logger,
             _ctx.deployment.id,

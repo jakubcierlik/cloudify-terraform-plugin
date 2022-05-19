@@ -552,7 +552,8 @@ class Terraform(CliTool):
         if not terraform_version and not skip_tf:
             ctx.instance.runtime_properties['terraform_version'] = \
                 tf.version
-        setup_config_tf(ctx, tf)
+        if ctx.workflow_id != 'uninstall':
+            setup_config_tf(ctx, tf, **kwargs)
         return tf
 
     def check_tflint(self):
@@ -590,7 +591,8 @@ def setup_config_tf(ctx,
                     tf,
                     tfsec_config=None,
                     tflint_config=None,
-                    terratag_config=None):
+                    terratag_config=None,
+                    **_):
     if ctx.operation.name != CREATE_OP:
         if tf.terraform_outdated:
             ctx.logger.error(
@@ -600,6 +602,12 @@ def setup_config_tf(ctx,
     tflint_config_from_props = ctx.node.properties.get('tflint_config', {})
     if tflint_config or tflint_config_from_props and \
             tflint_config_from_props.get('enable', False):
+        if 'installation_source' not in tflint_config:
+            tflint_config['installation_source'] = \
+                tflint_config_from_props.get('installation_source')
+        if 'executable_path' not in tflint_config:
+            tflint_config['executable_path'] = \
+                tflint_config_from_props.get('executable_path')
         tf.tflint = TFLint.from_ctx(_ctx=ctx, tflint_config=tflint_config)
         ctx.instance.runtime_properties['tflint_config'] = \
             tf.tflint.export_config()
@@ -607,6 +615,14 @@ def setup_config_tf(ctx,
     tfsec_config_from_props = ctx.node.properties.get('tfsec_config', {})
     if tfsec_config or tfsec_config_from_props and \
             tfsec_config_from_props.get('enable', False):
+
+        if 'installation_source' not in tfsec_config:
+            tfsec_config['installation_source'] = \
+                tfsec_config_from_props.get('installation_source')
+        if 'executable_path' not in tfsec_config:
+            tfsec_config['executable_path'] = \
+                tfsec_config_from_props.get('executable_path')
+
         tf.tfsec = TFSec.from_ctx(_ctx=ctx, tfsec_config=tfsec_config)
         ctx.instance.runtime_properties['tfsec_config'] = \
             tf.tfsec.export_config()
@@ -624,6 +640,7 @@ def setup_config_tf(ctx,
         terratag_config['tags'] = tags_from_cfg
 
     if terratag_config and terratag_config.get('enable', False):
+
         tf.terratag = Terratag.from_ctx(_ctx=ctx,
                                         terratag_config=terratag_config)
         ctx.instance.runtime_properties['terratag_config'] = \

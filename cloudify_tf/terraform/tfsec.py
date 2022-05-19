@@ -145,6 +145,7 @@ class TFSec(TFTool):
     def from_ctx(_ctx, tfsec_config=None):
         tfsec_config = tfsec_config or get_tfsec_config(
             _ctx.node.properties, _ctx.instance.runtime_properties)
+        _ctx.logger.debug('Using tfsec_config {}'.format(tfsec_config))
         return TFSec(
             _ctx.logger,
             _ctx.deployment.id,

@@ -52,6 +52,8 @@ def terratag(ctx, tf, terratag_config, **_):
                      source,
                      source_path,
                      **_)
+    ctx.instance.runtime_properties['terratag_config'] = \
+        tf.terratag.export_config()
 
 
 @operation
@@ -59,10 +61,14 @@ def terratag(ctx, tf, terratag_config, **_):
 def tflint(ctx, tf, tflint_config, **_):
     original_tflint_config = ctx.instance.runtime_properties.get(
         'tflint_config') or ctx.node.properties.get('tflint_config')
+    ctx.logger.info('Original TFLINT {}'.format(original_tflint_config))
     new_config_tflint = update_dict_values(
         original_tflint_config, tflint_config)
+    ctx.logger.info('New TFLINT {}'.format(new_config_tflint))
     tf.tflint = TFLint.from_ctx(ctx, new_config_tflint)
     tf.check_tflint()
+    ctx.instance.runtime_properties['tflint_config'] = \
+        tf.tflint.export_config()
 
 
 @operation
@@ -74,17 +80,25 @@ def tfsec(ctx, tf, tfsec_config, **_):
         original_tfsec_config, tfsec_config)
     tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
     tf.check_tfsec()
+    ctx.instance.runtime_properties['tfsec_config'] = \
+        tf.tfsec.export_config()
 
 
 @operation
 @with_terraform
-def setup_linters(tf, **_):
+def setup_linters(tf, ctx, **_):
     if tf.tflint:
         tf.tflint.validate()
+        ctx.instance.runtime_properties['tflint_config'] = \
+            tf.tflint.export_config()
     if tf.tfsec:
         tf.tfsec.validate()
+        ctx.instance.runtime_properties['tfsec_config'] = \
+            tf.tfsec.export_config()
     if tf.terratag:
         tf.terratag.validate()
+        ctx.instance.runtime_properties['terratag_config'] = \
+            tf.terratag.export_config()
 
 
 @operation
