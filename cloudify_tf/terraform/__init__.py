@@ -552,6 +552,9 @@ class Terraform(CliTool):
         if not terraform_version and not skip_tf:
             ctx.instance.runtime_properties['terraform_version'] = \
                 tf.version
+        # TODO: Check == install instead. But also consider that
+        # This means we wont do this for plan. and maybe there
+        # are bad effects.
         if ctx.workflow_id != 'uninstall':
             setup_config_tf(ctx, tf, **kwargs)
         return tf
@@ -605,6 +608,8 @@ def setup_config_tf(ctx,
         if 'installation_source' not in tflint_config:
             tflint_config['installation_source'] = \
                 tflint_config_from_props.get('installation_source')
+            # TODO: check if we need this and also we will want to double
+            # check runtime properties.
         if 'executable_path' not in tflint_config:
             tflint_config['executable_path'] = \
                 tflint_config_from_props.get('executable_path')
