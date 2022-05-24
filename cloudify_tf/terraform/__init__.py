@@ -24,7 +24,7 @@ from .tflint import TFLint
 from .terratag import Terratag
 from contextlib import contextmanager
 from cloudify import exceptions as cfy_exc
-from cloudify_common_sdk.utils import run_subprocess
+from cloudify_common_sdk.utils import run_subprocess, update_dict_values
 
 from .. import utils
 
@@ -555,7 +555,10 @@ class Terraform(CliTool):
         # TODO: Check == install instead. But also consider that
         # This means we wont do this for plan. and maybe there
         # are bad effects.
-        if ctx.workflow_id != 'uninstall':
+        ctx.logger.info('**** ctx.workflow_id: {}'.format(ctx.workflow_id))
+
+        if ctx.workflow_id == 'install' or \
+                ctx.workflow_id == 'execute_operation':
             setup_config_tf(ctx, tf, **kwargs)
         return tf
 
@@ -580,7 +583,7 @@ class Terraform(CliTool):
     def run_terratag(self):
         if not self.terratag:
             return
-        self.terratag.validate()
+        # self.terratag.validate()
         self.terratag.terraform_root_module = self.root_module
         commands = []
         if os.path.dirname(self.binary_path) not in os.environ['PATH']:
@@ -603,50 +606,51 @@ def setup_config_tf(ctx,
                 'Please update.'.format(tf.terraform_version))
 
     tflint_config_from_props = ctx.node.properties.get('tflint_config', {})
+    original_tflint_config = \
+        ctx.instance.runtime_properties.get('tflint_config', {}) or \
+        tflint_config_from_props
+    new_tflint_config = update_dict_values(original_tflint_config,
+                                           tflint_config)
+
     if tflint_config or tflint_config_from_props and \
             tflint_config_from_props.get('enable', False):
-        if 'installation_source' not in tflint_config:
-            tflint_config['installation_source'] = \
-                tflint_config_from_props.get('installation_source')
-            # TODO: check if we need this and also we will want to double
-            # check runtime properties.
-        if 'executable_path' not in tflint_config:
-            tflint_config['executable_path'] = \
-                tflint_config_from_props.get('executable_path')
-        tf.tflint = TFLint.from_ctx(_ctx=ctx, tflint_config=tflint_config)
+        tf.tflint = TFLint.from_ctx(_ctx=ctx, tflint_config=new_tflint_config)
         ctx.instance.runtime_properties['tflint_config'] = \
             tf.tflint.export_config()
+    # -------------------------------------------------------------------------
 
     tfsec_config_from_props = ctx.node.properties.get('tfsec_config', {})
+    original_tfsec_config = \
+        ctx.instance.runtime_properties.get('tfsec_config', {}) or \
+        tfsec_config_from_props
+    new_tfsec_config = update_dict_values(original_tfsec_config,
+                                          tfsec_config)
+
     if tfsec_config or tfsec_config_from_props and \
             tfsec_config_from_props.get('enable', False):
-
-        if 'installation_source' not in tfsec_config:
-            tfsec_config['installation_source'] = \
-                tfsec_config_from_props.get('installation_source')
-        if 'executable_path' not in tfsec_config:
-            tfsec_config['executable_path'] = \
-                tfsec_config_from_props.get('executable_path')
-
-        tf.tfsec = TFSec.from_ctx(_ctx=ctx, tfsec_config=tfsec_config)
+        tf.tfsec = TFSec.from_ctx(_ctx=ctx, tfsec_config=new_tfsec_config)
         ctx.instance.runtime_properties['tfsec_config'] = \
             tf.tfsec.export_config()
 
-    terratag_config = terratag_config or ctx.node.properties.get(
-        'terratag_config', {})
+    # -------------------------------------------------------------------------
+    terratag_config_from_props = ctx.node.properties.get('terratag_config', )
+    original_terratag_config = \
+        ctx.instance.runtime_properties.get('terratag_config', {}) or \
+        terratag_config_from_props
+    new_terratag_config = update_dict_values(
+        original_terratag_config, terratag_config)
 
     try:
         tags_from_ctx = ctx.deployment.resource_tags
     except AttributeError:
         pass
     else:
-        tags_from_cfg = terratag_config.get('tags', {})
+        tags_from_cfg = new_terratag_config.get('tags', {})
         tags_from_cfg.update(tags_from_ctx)
-        terratag_config['tags'] = tags_from_cfg
+        new_terratag_config['tags'] = tags_from_cfg
 
-    if terratag_config and terratag_config.get('enable', False):
-
+    if terratag_config or terratag_config_from_props.get('enable', False):
         tf.terratag = Terratag.from_ctx(_ctx=ctx,
-                                        terratag_config=terratag_config)
+                                        terratag_config=new_terratag_config)
         ctx.instance.runtime_properties['terratag_config'] = \
             tf.terratag.export_config()

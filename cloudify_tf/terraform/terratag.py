@@ -49,7 +49,6 @@ class Terratag(TFTool):
         super().__init__(logger, deployment_name, node_instance_name)
         self._installation_source = installation_source
         self.__executable_path = executable_path
-        self._executable_path = None
         self._tags_from_props = tags or {}
         self._tags = {}
         self._tags_string = ''
@@ -87,10 +86,11 @@ class Terratag(TFTool):
             self._executable_path = self.__executable_path
         elif self.require_download_terratag(self.__executable_path):
             self._executable_path = self.__executable_path
-            install_binary(self.node_instance_directory,
-                           self._executable_path,
-                           self.installation_source,
-                           'terratag.tar.gz')
+            install_binary(
+                self.node_instance_directory,
+                self._executable_path,
+                self.installation_source,
+                'terratag.tar.gz')
         return self._executable_path
 
     def require_download_terratag(self, executable_path):
@@ -217,8 +217,8 @@ class Terratag(TFTool):
         command = [self.executable_path,
                    self.tags_string,
                    self.flags_string]
-        if path.dirname(self.terraform_executable) not in environ['PATH']:
-            sys.path.append(path.dirname(self.terraform_executable))
+        # if path.dirname(self.terraform_executable) not in environ['PATH']:
+        #     sys.path.append(path.dirname(self.terraform_executable))
         return self.execute(command, self._terraform_root_module, self.env,
                             return_output=False)
 
