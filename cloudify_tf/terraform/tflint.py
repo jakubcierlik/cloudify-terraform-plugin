@@ -17,7 +17,6 @@
 from os import path, remove
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
-from subprocess import Popen, PIPE, STDOUT
 
 from .tools_base import TFTool, TFToolException
 
@@ -272,7 +271,6 @@ class TFLint(TFTool):
                 '{} in order to replicate the plugin behavior.'.format(
                     ' '.join(command), self.terraform_root_module))
         return
-
 
     # def execute(self, command, *args, **kwargs):
     #     process = Popen(command, stdout=PIPE, stderr=STDOUT)

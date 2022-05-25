@@ -598,6 +598,7 @@ def setup_config_tf(ctx,
                 'Your terraform version {} is outdated. '
                 'Please update.'.format(tf.terraform_version))
 
+    #  TFlint
     tflint_config_from_props = ctx.node.properties.get('tflint_config', {})
     original_tflint_config = \
         ctx.instance.runtime_properties.get('tflint_config', {}) or \
@@ -610,8 +611,8 @@ def setup_config_tf(ctx,
         tf.tflint = TFLint.from_ctx(_ctx=ctx, tflint_config=new_tflint_config)
         ctx.instance.runtime_properties['tflint_config'] = \
             tf.tflint.export_config()
-    # -------------------------------------------------------------------------
 
+    #  TFsec
     tfsec_config_from_props = ctx.node.properties.get('tfsec_config', {})
     original_tfsec_config = \
         ctx.instance.runtime_properties.get('tfsec_config', {}) or \
@@ -625,7 +626,7 @@ def setup_config_tf(ctx,
         ctx.instance.runtime_properties['tfsec_config'] = \
             tf.tfsec.export_config()
 
-    # -------------------------------------------------------------------------
+    # Terratag
     terratag_config_from_props = ctx.node.properties.get('terratag_config', )
     original_terratag_config = \
         ctx.instance.runtime_properties.get('terratag_config', {}) or \
