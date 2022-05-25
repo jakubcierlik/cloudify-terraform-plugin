@@ -42,11 +42,12 @@ def terratag(ctx, tf, terratag_config, **_):
         'terratag_config') or ctx.node.properties.get('terratag_config')
     new_terratag_config = update_dict_values(
         original_tflint_config, terratag_config)
+    ctx.logger.info('New Terratag {}'.format(new_terratag_config))
     tf.terratag = Terratag.from_ctx(ctx, new_terratag_config)
+    tf.run_terratag()
     resource_config = utils.get_resource_config()
     source = resource_config.get('source')
     source_path = resource_config.get('source_path')
-    tf.run_terratag()
     _reload_template(ctx,
                      tf,
                      source,
@@ -61,7 +62,6 @@ def terratag(ctx, tf, terratag_config, **_):
 def tflint(ctx, tf, tflint_config, **_):
     original_tflint_config = ctx.instance.runtime_properties.get(
         'tflint_config') or ctx.node.properties.get('tflint_config')
-    ctx.logger.info('Original TFLINT {}'.format(original_tflint_config))
     new_config_tflint = update_dict_values(
         original_tflint_config, tflint_config)
     ctx.logger.info('New TFLINT {}'.format(new_config_tflint))

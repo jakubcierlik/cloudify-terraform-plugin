@@ -576,7 +576,7 @@ class Terraform(CliTool):
     def run_terratag(self):
         if not self.terratag:
             return
-        # self.terratag.validate()
+        self.terratag.validate()
         self.terratag.terraform_root_module = self.root_module
         commands = []
         if os.path.dirname(self.binary_path) not in os.environ['PATH']:

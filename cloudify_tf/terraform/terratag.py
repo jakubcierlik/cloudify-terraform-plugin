@@ -85,11 +85,10 @@ class Terratag(TFTool):
             self._executable_path = self.__executable_path
         elif self.require_download_terratag(self.__executable_path):
             self._executable_path = self.__executable_path
-            install_binary(
-                self.node_instance_directory,
-                self._executable_path,
-                self.installation_source,
-                'terratag.tar.gz')
+            install_binary(self.node_instance_directory,
+                           self._executable_path,
+                           self.installation_source,
+                           'terratag.tar.gz')
         return self._executable_path
 
     def require_download_terratag(self, executable_path):
