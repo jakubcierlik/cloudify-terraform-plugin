@@ -15,9 +15,8 @@
 # limitations under the License.
 
 import re
-import sys
 import json
-from os import path, environ
+from os import path
 
 from cloudify_common_sdk.utils import install_binary
 

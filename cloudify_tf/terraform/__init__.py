@@ -24,11 +24,11 @@ from .tflint import TFLint
 from .terratag import Terratag
 from contextlib import contextmanager
 from cloudify import exceptions as cfy_exc
+from cloudify_common_sdk.cli_tool_base import CliTool
 from cloudify_common_sdk.utils import run_subprocess, update_dict_values
 
 from .. import utils
 
-from cloudify_common_sdk.cli_tool_base import CliTool
 
 CREATE_OP = 'cloudify.interfaces.lifecycle.create'
 
@@ -552,14 +552,7 @@ class Terraform(CliTool):
         if not terraform_version and not skip_tf:
             ctx.instance.runtime_properties['terraform_version'] = \
                 tf.version
-        # TODO: Check == install instead. But also consider that
-        # This means we wont do this for plan. and maybe there
-        # are bad effects.
-        ctx.logger.info('**** ctx.workflow_id: {}'.format(ctx.workflow_id))
-
-        if ctx.workflow_id == 'install' or \
-                ctx.workflow_id == 'execute_operation':
-            setup_config_tf(ctx, tf, **kwargs)
+        setup_config_tf(ctx, tf, **kwargs)
         return tf
 
     def check_tflint(self):
