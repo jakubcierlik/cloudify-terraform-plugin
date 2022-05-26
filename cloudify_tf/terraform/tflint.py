@@ -257,37 +257,18 @@ class TFLint(TFTool):
     def execute(self, command, cwd, env, return_output=True, *args, **kwargs):
         try:
             self.logger.info('command: {}'.format(command))
-            self.logger.info('cwd: {}'.format(cwd))
-
             output = self._execute(
                 command, cwd, env, kwargs, return_output=return_output)
             self.logger.info('output: {}'.format(output))
         except Exception:
             raise TFLintException(
-                'TFsec error. See above log for more information. '
+                'TFLint error. See above log for more information. '
                 'If you are working in a development environment, '
                 'you may run the command, '
                 '"{}" from the directory '
                 '{} in order to replicate the plugin behavior.'.format(
                     ' '.join(command), self.terraform_root_module))
         return
-
-    # def execute(self, command, *args, **kwargs):
-    #     process = Popen(command, stdout=PIPE, stderr=STDOUT)
-    #     self.logger.info('command: {}'.format(command))
-    #     with process.stdout:
-    #         for line in iter(process.stdout.readline, b''):
-    #             self.logger.error(line.decode('utf-8'))
-    #     exitcode = process.wait()
-    #     if exitcode:
-    #         raise TFLintException(
-    #             'TFlint error. See above log for more information. '
-    #             'If you are working in a development environment, '
-    #             'you may run the command, '
-    #             '"{}" from the directory '
-    #             '{} in order to replicate the plugin behavior.'.format(
-    #                 ' '.join(command), self.terraform_root_module))
-    #     return
 
 
 def get_tflint_config(node_props, instance_props):
