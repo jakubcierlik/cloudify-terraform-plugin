@@ -215,8 +215,6 @@ class Terratag(TFTool):
         command = [self.executable_path,
                    self.tags_string,
                    self.flags_string]
-        # if path.dirname(self.terraform_executable) not in environ['PATH']:
-        #     sys.path.append(path.dirname(self.terraform_executable))
         return self.execute(command, self._terraform_root_module, self.env,
                             return_output=False)
 

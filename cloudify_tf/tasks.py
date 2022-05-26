@@ -210,16 +210,15 @@ def plan(ctx,
                      environment_variables)
 
     resource_config = utils.get_resource_config()
+
     if source or source_path:
-        # TODO: See if this is necessary or not:
-        # after running tflint, do plan provide new source
-        # but not a new source_path. (source_path should be empty)
+        source = source or resource_config.get('source')
+        source_path = source_path or resource_config.get('source_path')
         tf.root_module = utils.update_terraform_source(source, source_path)
         resource_config.update(
             {
-                'source': source or resource_config.get('source'),
-                'source_path': source_path or resource_config.get(
-                    'source_path')
+                'source': source,
+                'source_path': source_path
             }
         )
     json_result, plain_text_result = _plan(tf)
