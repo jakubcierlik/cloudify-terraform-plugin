@@ -42,6 +42,7 @@ def terratag(ctx, tf, terratag_config, **_):
         'terratag_config') or ctx.node.properties.get('terratag_config')
     new_terratag_config = update_dict_values(
         original_tflint_config, terratag_config)
+    ctx.logger.info('New Terratag {}'.format(new_terratag_config))
     tf.terratag = Terratag.from_ctx(ctx, new_terratag_config)
     tf.run_terratag()
     resource_config = utils.get_resource_config()
@@ -61,7 +62,6 @@ def terratag(ctx, tf, terratag_config, **_):
 def tflint(ctx, tf, tflint_config, **_):
     original_tflint_config = ctx.instance.runtime_properties.get(
         'tflint_config') or ctx.node.properties.get('tflint_config')
-    ctx.logger.info('Original TFLINT {}'.format(original_tflint_config))
     new_config_tflint = update_dict_values(
         original_tflint_config, tflint_config)
     ctx.logger.info('New TFLINT {}'.format(new_config_tflint))
@@ -78,6 +78,7 @@ def tfsec(ctx, tf, tfsec_config, **_):
         'tfsec_config') or ctx.node.properties.get('tfsec_config')
     new_config_tfsec = update_dict_values(
         original_tfsec_config, tfsec_config)
+    ctx.logger.info('New TFSEC {}'.format(new_config_tfsec))
     tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
     tf.check_tfsec()
     ctx.instance.runtime_properties['tfsec_config'] = \
