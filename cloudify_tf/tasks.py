@@ -32,6 +32,28 @@ from .decorators import (
 from .terraform.tools_base import TFToolException
 from .terraform.tfsec import TFSec
 from .terraform.tflint import TFLint
+from .terraform.terratag import Terratag
+
+
+@operation
+@with_terraform
+def terratag(ctx, tf, terratag_config, **_):
+    original_tflint_config = ctx.instance.runtime_properties.get(
+        'terratag_config') or ctx.node.properties.get('terratag_config')
+    new_terratag_config = update_dict_values(
+        original_tflint_config, terratag_config)
+    tf.terratag = Terratag.from_ctx(ctx, new_terratag_config)
+    tf.run_terratag()
+    resource_config = utils.get_resource_config()
+    source = resource_config.get('source')
+    source_path = resource_config.get('source_path')
+    _reload_template(ctx,
+                     tf,
+                     source,
+                     source_path,
+                     **_)
+    ctx.instance.runtime_properties['terratag_config'] = \
+        tf.terratag.export_config()
 
 
 @operation
@@ -43,6 +65,8 @@ def tflint(ctx, tf, tflint_config, **_):
         original_tflint_config, tflint_config)
     tf.tflint = TFLint.from_ctx(ctx, new_config_tflint)
     tf.check_tflint()
+    ctx.instance.runtime_properties['tflint_config'] = \
+        tf.tflint.export_config()
 
 
 @operation
@@ -54,15 +78,25 @@ def tfsec(ctx, tf, tfsec_config, **_):
         original_tfsec_config, tfsec_config)
     tf.tfsec = TFSec.from_ctx(ctx, new_config_tfsec)
     tf.check_tfsec()
+    ctx.instance.runtime_properties['tfsec_config'] = \
+        tf.tfsec.export_config()
 
 
 @operation
 @with_terraform
-def setup_linters(tf, **_):
+def setup_linters(tf, ctx, **_):
     if tf.tflint:
         tf.tflint.validate()
+        ctx.instance.runtime_properties['tflint_config'] = \
+            tf.tflint.export_config()
     if tf.tfsec:
         tf.tfsec.validate()
+        ctx.instance.runtime_properties['tfsec_config'] = \
+            tf.tfsec.export_config()
+    if tf.terratag:
+        tf.terratag.validate()
+        ctx.instance.runtime_properties['terratag_config'] = \
+            tf.terratag.export_config()
 
 
 @operation
@@ -176,13 +210,15 @@ def plan(ctx,
                      environment_variables)
 
     resource_config = utils.get_resource_config()
+
     if source or source_path:
+        source = source or resource_config.get('source')
+        source_path = source_path or resource_config.get('source_path')
         tf.root_module = utils.update_terraform_source(source, source_path)
         resource_config.update(
             {
-                'source': source or resource_config.get('source'),
-                'source_path': source_path or resource_config.get(
-                    'source_path')
+                'source': source,
+                'source_path': source_path
             }
         )
     json_result, plain_text_result = _plan(tf)

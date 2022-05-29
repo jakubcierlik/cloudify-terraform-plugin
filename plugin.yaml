@@ -410,6 +410,11 @@ node_types:
           inputs:
             tflint_config:
               default: { get_property: [ SELF, tflint_config ] }
+        terratag:
+          implementation: tf.cloudify_tf.tasks.terratag
+          inputs:
+            terratag_config:
+              default: { get_property: [ SELF, terratag_config ] }
         reload:
           <<: *terraform_reload
         refresh:

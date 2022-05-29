@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import os
 import re
 import json
@@ -24,11 +25,11 @@ from .tflint import TFLint
 from .terratag import Terratag
 from contextlib import contextmanager
 from cloudify import exceptions as cfy_exc
-from cloudify_common_sdk.utils import run_subprocess
+from cloudify_common_sdk.cli_tool_base import CliTool
+from cloudify_common_sdk.utils import run_subprocess, update_dict_values
 
 from .. import utils
 
-from cloudify_common_sdk.cli_tool_base import CliTool
 
 CREATE_OP = 'cloudify.interfaces.lifecycle.create'
 
@@ -552,7 +553,7 @@ class Terraform(CliTool):
         if not terraform_version and not skip_tf:
             ctx.instance.runtime_properties['terraform_version'] = \
                 tf.version
-        setup_config_tf(ctx, tf)
+        setup_config_tf(ctx, tf, **kwargs)
         return tf
 
     def check_tflint(self):
@@ -590,43 +591,61 @@ def setup_config_tf(ctx,
                     tf,
                     tfsec_config=None,
                     tflint_config=None,
-                    terratag_config=None):
+                    terratag_config=None,
+                    **_):
     if ctx.operation.name != CREATE_OP:
         if tf.terraform_outdated:
             ctx.logger.error(
                 'Your terraform version {} is outdated. '
                 'Please update.'.format(tf.terraform_version))
 
+    #  TFlint
     tflint_config_from_props = ctx.node.properties.get('tflint_config', {})
+    original_tflint_config = \
+        ctx.instance.runtime_properties.get('tflint_config', {}) or \
+        tflint_config_from_props
+    new_tflint_config = update_dict_values(original_tflint_config,
+                                           tflint_config)
+
     if tflint_config or tflint_config_from_props and \
             tflint_config_from_props.get('enable', False):
-        tf.tflint = TFLint.from_ctx(_ctx=ctx, tflint_config=tflint_config)
+        tf.tflint = TFLint.from_ctx(_ctx=ctx, tflint_config=new_tflint_config)
         ctx.instance.runtime_properties['tflint_config'] = \
             tf.tflint.export_config()
 
+    #  TFsec
     tfsec_config_from_props = ctx.node.properties.get('tfsec_config', {})
+    original_tfsec_config = \
+        ctx.instance.runtime_properties.get('tfsec_config', {}) or \
+        tfsec_config_from_props
+    new_tfsec_config = update_dict_values(original_tfsec_config,
+                                          tfsec_config)
+
     if tfsec_config or tfsec_config_from_props and \
             tfsec_config_from_props.get('enable', False):
-        tf.tfsec = TFSec.from_ctx(_ctx=ctx, tfsec_config=tfsec_config)
+        tf.tfsec = TFSec.from_ctx(_ctx=ctx, tfsec_config=new_tfsec_config)
         ctx.instance.runtime_properties['tfsec_config'] = \
             tf.tfsec.export_config()
 
-    terratag_config = terratag_config or ctx.node.properties.get(
-        'terratag_config', {})
+    # Terratag
+    terratag_config_from_props = ctx.node.properties.get('terratag_config', )
+    original_terratag_config = \
+        ctx.instance.runtime_properties.get('terratag_config', {}) or \
+        terratag_config_from_props
+    new_terratag_config = update_dict_values(
+        original_terratag_config, terratag_config)
 
     try:
         tags_from_ctx = ctx.deployment.resource_tags
     except AttributeError:
         pass
     else:
-        tags_from_cfg = terratag_config.get('tags', {})
+        tags_from_cfg = new_terratag_config.get('tags', {})
         tags_from_cfg.update(tags_from_ctx)
-        terratag_config['tags'] = tags_from_cfg
+        new_terratag_config['tags'] = tags_from_cfg
 
-    if terratag_config:
-        if terratag_config.get('enable', False):
-            tf.terratag = Terratag.from_ctx(_ctx=ctx)
-            ctx.instance.runtime_properties['terratag_config'] = \
-                tf.terratag.export_config()
-            tf.terratag.terraform_executable = tf.binary_path
-            tf.terratag.validate()
+    if terratag_config or terratag_config_from_props.get('enable', False):
+        tf.terratag = Terratag.from_ctx(_ctx=ctx,
+                                        terratag_config=new_terratag_config)
+        ctx.instance.runtime_properties['terratag_config'] = \
+            tf.terratag.export_config()
