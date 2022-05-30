@@ -469,7 +469,7 @@ workflows:
         description: |
           List of node instance ID's to refresh for.
       node_ids:
-        type: node_instance_ids
+        type: node_ids
         default: []
         description: |
           List of node templates to refresh for.
