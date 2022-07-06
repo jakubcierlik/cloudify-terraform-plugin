@@ -33,6 +33,7 @@ from .terraform.tools_base import TFToolException
 from .terraform.tfsec import TFSec
 from .terraform.tflint import TFLint
 from .terraform.terratag import Terratag
+from .terraform.infracost import Infracost
 
 
 @operation
@@ -80,6 +81,22 @@ def tfsec(ctx, tf, tfsec_config, **_):
     tf.check_tfsec()
     ctx.instance.runtime_properties['tfsec_config'] = \
         tf.tfsec.export_config()
+
+
+@operation
+@with_terraform
+def infracost(ctx, tf, infracost_config, **_):
+    original_infracost_config = ctx.instance.runtime_properties.get(
+        'infracost_config') or ctx.node.properties.get('infracost_config')
+    new_config_infracost = update_dict_values(
+        original_infracost_config, infracost_config)
+    tf.infracost = Infracost.from_ctx(ctx, new_config_infracost,
+                                      tf.variables, tf.env, tf.tfvars)
+    result, json_result = tf.run_infracost()
+    ctx.instance.runtime_properties['infracost'] = json_result
+    ctx.instance.runtime_properties['plain_text_infracost'] = result
+    ctx.instance.runtime_properties['infracost_config'] = \
+        tf.infracost.export_config()
 
 
 @operation
@@ -316,6 +333,9 @@ def destroy(ctx, tf, **_):
     terratag_config = ctx.node.properties.get('terratag_config')
     if terratag_config.get('enable'):
         tf.terratag.uninstall_binary()
+    infracost_config = ctx.node.properties.get('infracost_config')
+    if infracost_config.get('enable'):
+        tf.infracost.uninstall_binary()
 
 
 def _destroy(tf):

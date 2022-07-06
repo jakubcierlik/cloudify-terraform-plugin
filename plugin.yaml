@@ -2,7 +2,7 @@ plugins:
   tf:
     executor: central_deployment_agent
     package_name: cloudify-terraform-plugin
-    package_version: '0.18.19'
+    package_version: '0.18.20'
 
 dsl_definitions:
 
@@ -288,6 +288,25 @@ data_types:
         type: boolean
         default: false
 
+  cloudify.types.terraform.infracost:
+    properties:
+      installation_source:
+        type: string
+        description: The URL to download the infracost binary from.
+        default: 'https://github.com/infracost/infracost/releases/download/v0.10.3/infracost-linux-amd64.tar.gz'
+        required: false
+      executable_path:
+        type: string
+        description: If the binary is located on the file system, this is the path on the file system.
+        required: false
+      api_key:
+        type: string
+        description: free API key used to retrieve prices from infracost Cloud Pricing API.
+        default: ''
+      enable:
+        type: boolean
+        default: false
+
 node_types:
   # Represents a Terraform installation.
   cloudify.nodes.terraform:
@@ -338,6 +357,8 @@ node_types:
         type: cloudify.types.terraform.tfsec
       terratag_config:
         type: cloudify.types.terraform.terratag
+      infracost_config:
+        type: cloudify.types.terraform.infracost
     interfaces:
       cloudify.interfaces.validation:
         check_status:
@@ -453,6 +474,11 @@ node_types:
                 resource-specific ID to identify that resource being imported.
               type: string
               default: ''
+        infracost:
+          implementation: tf.cloudify_tf.tasks.infracost
+          inputs:
+            infracost_config:
+              default: { get_property: [ SELF, infracost_config ] }
 
 relationships:
 
@@ -528,3 +554,12 @@ workflows:
         description: >
           resource-specific ID to identify that resource being imported.
         type: string
+
+  run_infracost:
+    mapping: tf.cloudify_tf.workflows.run_infracost
+    parameters:
+      <<: *terraform_plan_params
+      infracost_config:
+        description: >
+          infracost specific config
+        type: cloudify.types.terraform.infracost
