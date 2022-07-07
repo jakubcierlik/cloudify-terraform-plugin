@@ -33,6 +33,8 @@ def with_terraform(func):
     @wraps(func)
     def f(*args, **kwargs):
         ctx = kwargs['ctx']
+        ctx.logger.info('BEFORE EXECUTION: {}'.format(
+            ctx.instance.runtime_properties.get('resource_config')))
         if ctx.workflow_id == 'update' and not is_using_existing(target=False):
             ctx.logger.error(
                 'The node type cloudify.nodes.terraform, which governs the '
@@ -57,7 +59,11 @@ def with_terraform(func):
                                     skip_tf=ctx.operation.name == CREATE_OP,
                                     **kwargs)
             kwargs['tf'] = tf
-            return func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            ctx.logger.info('AFTER EXECUTION: {}'.format(
+                ctx.instance.runtime_properties.get('resource_config')))
+            return result
+
     return f
 
 
