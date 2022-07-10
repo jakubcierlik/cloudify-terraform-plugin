@@ -624,7 +624,7 @@ def setup_config_tf(ctx,
                     **_):
     if ctx.operation.name != CREATE_OP:
         if tf.terraform_outdated:
-            ctx.logger.error(
+            ctx.logger.info(
                 'Your terraform version {} is outdated. '
                 'Please update.'.format(tf.terraform_version))
 
