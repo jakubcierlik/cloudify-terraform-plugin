@@ -68,6 +68,7 @@ class Terraform(CliTool):
 
         backend = backend or {}
         provider = provider or {}
+        variables = variables or {}
         required_providers = required_providers or {}
 
         self.tool_name = 'Terraform'
