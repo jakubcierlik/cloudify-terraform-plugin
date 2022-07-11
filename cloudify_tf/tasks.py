@@ -91,7 +91,9 @@ def infracost(ctx, tf, infracost_config, **_):
     new_config_infracost = update_dict_values(
         original_infracost_config, infracost_config)
     tf.infracost = Infracost.from_ctx(ctx, new_config_infracost,
-                                      tf.variables, tf.env, tf.tfvars)
+                                      tf.insecure_variables,
+                                      tf.insecure_env,
+                                      tf.tfvars)
     result, json_result = tf.run_infracost()
     ctx.instance.runtime_properties['infracost'] = json_result
     ctx.instance.runtime_properties['plain_text_infracost'] = result
@@ -203,10 +205,14 @@ def _handle_new_vars(runtime_props,
                      environment_variables=None,
                      update=False):
     if update:
+        resource_config = utils.get_resource_config()
         if variables:
-            runtime_props['resource_config']['variables'] = tf.variables
+            for k, v in variables.items():
+                resource_config['variables'][k] = v
         if environment_variables:
-            runtime_props['resource_config']['environment_variables'] = tf.env
+            for k, v in environment_variables.items():
+                resource_config['environment_variables'][k] = v
+        utils.update_resource_config(resource_config)
 
 
 @operation
@@ -241,7 +247,7 @@ def plan(ctx,
     json_result, plain_text_result = _plan(tf)
     ctx.instance.runtime_properties['plan'] = json_result
     ctx.instance.runtime_properties['plain_text_plan'] = plain_text_result
-    ctx.instance.runtime_properties['resource_config'] = resource_config
+    utils.update_resource_config(resource_config)
     ctx.instance.runtime_properties['previous_tf_state_file'] = \
         utils.get_terraform_state_file(tf.root_module)
 
@@ -387,7 +393,7 @@ def _reload_template(ctx,
             'source_path': source_path
         }
     )
-    ctx.instance.runtime_properties['resource_config'] = resource_config
+    utils.update_resource_config(resource_config)
     _state_pull(tf)
     ctx.instance.runtime_properties['previous_tf_state_file'] = \
         utils.get_terraform_state_file(tf.root_module)
@@ -562,7 +568,7 @@ def _import_resource(ctx,
             'source_path': source_path
         }
     )
-    ctx.instance.runtime_properties['resource_config'] = resource_config
+    utils.update_resource_config(resource_config)
     ctx.instance.runtime_properties['previous_tf_state_file'] = \
         utils.get_terraform_state_file(tf.root_module)
     try:

@@ -21,9 +21,10 @@ from tempfile import mkdtemp
 from contextlib import contextmanager
 
 from cloudify.state import current_ctx
-from cloudify.mocks import (MockContext, MockCloudifyContext,
-                            MockNodeInstanceContext,
-                            MockNodeContext)
+from cloudify.mocks import (MockContext,
+                            MockNodeContext,
+                            MockCloudifyContext,
+                            MockNodeInstanceContext)
 
 from . import TestBase
 from ..tasks import (apply,
@@ -103,8 +104,10 @@ class TestPlugin(TestBase):
     @patch('cloudify_common_sdk.utils.os.remove')
     @patch('cloudify_common_sdk.utils.unzip_and_set_permissions')
     @patch('cloudify_common_sdk.utils.install_binary', suffix='tf.zip')
-    def test_install(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_install(self, mock_resource_config, *_):
         conf = self.get_terraform_conf_props(test_dir1)
+        mock_resource_config.return_value = conf.get('resource_config')
         ctx = self.mock_ctx("test_install", conf)
         current_ctx.set(ctx=ctx)
         kwargs = {
@@ -121,11 +124,13 @@ class TestPlugin(TestBase):
             ctx.instance.runtime_properties.get("plugins_dir"),
             conf.get("terraform_config").get("plugins_dir"))
 
+    @patch('os.path.exists')
     @patch('cloudify_tf.utils.get_node_instance_dir',
            return_value=test_dir2)
     @patch('cloudify_tf.tasks.get_node_instance_dir',
            return_value=test_dir2)
-    def test_set_directory_config(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_set_directory_config(self, mock_resource_config, *_):
         target = MockContext({
             'instance': MockNodeInstanceContext(
                 id='terra_install-1',
@@ -139,14 +144,14 @@ class TestPlugin(TestBase):
                 'node_id': '1'
             }})
         source_work_dir = mkdtemp()
+        conf = self.get_terraform_module_conf_props(source_work_dir)
         source = MockContext({
             'instance': MockNodeInstanceContext(
                 id='terra_module-1',
                 runtime_properties={}),
             'node': MockNodeContext(
                 id='2',
-                properties=self.get_terraform_module_conf_props(
-                    source_work_dir)
+                properties=conf
             ), '_context': {
                 'node_id': '2'
             }})
@@ -155,10 +160,12 @@ class TestPlugin(TestBase):
         kwargs = {
             'ctx': ctx
         }
+        mock_resource_config.return_value = conf
         set_directory_config(**kwargs)
         self.assertEqual(
             ctx.source.instance.runtime_properties.get("executable_path"),
-            ctx.target.instance.runtime_properties.get("executable_path"))
+            ctx.target.instance.runtime_properties.get("executable_path")
+        )
 
     @patch('cloudify_tf.utils._unzip_archive')
     @patch('cloudify_tf.utils.copy_directory')
@@ -168,8 +175,10 @@ class TestPlugin(TestBase):
            return_value=test_dir3)
     @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
            return_value=False)
-    def test_apply_no_output(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_apply_no_output(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
+        mock_resource_config.return_value = conf.get('resource_config')
         ctx = self.mock_ctx("test_apply_no_output", conf)
         current_ctx.set(ctx=ctx)
         kwargs = {
@@ -202,9 +211,11 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
     @patch('cloudify_tf.utils.get_node_instance_dir',
            return_value=test_dir3)
-    def test_apply_with_output(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_apply_with_output(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
         ctx = self.mock_ctx("test_apply_with_output", conf)
+        mock_resource_config.return_value = conf.get('resource_config')
         current_ctx.set(ctx=ctx)
         kwargs = {
             'ctx': ctx
@@ -239,11 +250,13 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.utils.get_plugins_dir')
     @patch('cloudify_common_sdk.utils.install_binary', suffix='tf.zip')
     @patch('cloudify_tf.utils.dump_file')
-    def test_env_vars(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_env_vars(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
         conf['resource_config']['environment_variables'] = {  # noqa
             'true': True,
             'false': False}
+        mock_resource_config.return_value = conf.get('resource_config')
 
         ctx = self.mock_ctx("test_apply_with_output", conf)
         current_ctx.set(ctx=ctx)
@@ -265,7 +278,9 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.terratag.Terratag.export_config')
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
+    @patch('cloudify_tf.utils.get_resource_config')
     def test_setup_linters(self,
+                           mock_resource_config,
                            mock_node_dir,
                            mock_dep_dir,
                            mock_terratag_export,
@@ -312,6 +327,7 @@ class TestPlugin(TestBase):
                 'enable': True
             },
         })
+        mock_resource_config.return_value = conf
         ctx = self.mock_ctx("test_apply_with_output", conf)
         ctx.instance._id = 'foo'
         current_ctx.set(ctx=ctx)
@@ -343,13 +359,16 @@ class TestPlugin(TestBase):
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
     @patch('cloudify_tf.terraform.tflint.TFLint.tflint')
+    @patch('cloudify_tf.utils.get_resource_config')
     def test_apply_check_tflint(self,
+                                mock_resource_config,
                                 mock_tflint,
                                 mock_node_dir,
                                 mock_dep_dir,
                                 mock_runtime_file,
                                 *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
+        mock_resource_config.return_value = conf.get('resource_config')
         conf.update({
             "tflint_config": {
                 'installation_source': 'installation_source_foo',
@@ -404,13 +423,16 @@ class TestPlugin(TestBase):
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
     @patch('cloudify_tf.terraform.tfsec.TFSec.tfsec')
+    @patch('cloudify_tf.utils.get_resource_config')
     def test_apply_check_tfsec(self,
+                               mock_resource_config,
                                mock_tfsec,
                                mock_node_dir,
                                mock_dep_dir,
                                mock_runtime_file,
                                *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
+        mock_resource_config.return_value = conf.get('resource_config')
         conf.update({
             "tfsec_config": {
                 'installation_source': 'installation_source_tfsec',
@@ -437,8 +459,10 @@ class TestPlugin(TestBase):
            return_value=test_dir3)
     @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
            return_value=False)
-    def test_check_drift(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_check_drift(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
+        mock_resource_config.return_value = conf.get('resource_config')
         ctx = self.mock_ctx("test_check_drift", conf)
         current_ctx.set(ctx=ctx)
         kwargs = {
@@ -511,7 +535,8 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.utils.get_executable_path')
     @patch('cloudify_tf.terraform.utils.get_executable_path')
     @patch('cloudify_tf.terraform.utils.get_executable_path')
-    def test_apply_tf_vars(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_apply_tf_vars(self, mock_resource_config, *_):
         _conf = self.get_terraform_module_conf_props(test_dir3)
         conf = {
             "terratag_config": _conf['terratag_config'],
@@ -519,6 +544,7 @@ class TestPlugin(TestBase):
                 "tfvars": 'val.tfvars'
             }
         }
+        mock_resource_config.return_value = conf.get('resource_config')
         tfvars_mock = 'val.tfvars'
         key_word_args = {
             'tfvars': tfvars_mock,
@@ -544,8 +570,10 @@ class TestPlugin(TestBase):
            return_value=test_dir3)
     @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
            return_value=False)
-    def test_import_resource(self, *_):
+    @patch('cloudify_tf.utils.get_resource_config')
+    def test_import_resource(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
+        mock_resource_config.return_value = conf.get('resource_config')
         ctx = self.mock_ctx("test_import_resource", conf)
         current_ctx.set(ctx=ctx)
         kwargs = {

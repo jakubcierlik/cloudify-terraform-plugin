@@ -25,6 +25,7 @@ import tempfile
 import requests
 import threading
 from io import BytesIO
+from copy import deepcopy
 from textwrap import indent
 from itertools import islice
 from contextlib import contextmanager
@@ -42,6 +43,7 @@ from cloudify_common_sdk.utils import (
     get_ctx_node,
     download_file,
     copy_directory,
+    CommonSDKSecret,
     get_ctx_instance,
     find_rel_by_type,
     get_cloudify_version,
@@ -53,6 +55,10 @@ from cloudify_common_sdk.resource_downloader import unzip_archive
 from cloudify_common_sdk.resource_downloader import untar_archive
 from cloudify_common_sdk.resource_downloader import get_shared_resource
 from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
+from cloudify_common_sdk.secure_property_management import (
+    store_property,
+    get_stored_property)
+
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
@@ -68,6 +74,16 @@ from .constants import (
     TERRAFORM_STATE_FILE
 )
 from ._compat import text_type, StringIO, mkdir_p
+
+
+def convert_secrets(data):
+    data = deepcopy(data)
+    for k, v in list(data.items()):
+        if isinstance(v, CommonSDKSecret):
+            data[k] = v.secret
+        else:
+            data[k] = v
+    return data
 
 
 def exclude_file(dirname, filename, excluded_files):
@@ -251,20 +267,12 @@ def find_terraform_node_from_rel():
 
 
 def update_resource_config(new_values, target=False):
-    instance = get_ctx_instance(target=target)
-    resource_config = get_resource_config(target=target)
-    resource_config.update(new_values)
-    instance.runtime_properties['resource_config'] = resource_config
+    store_property(ctx, 'resource_config', new_values, target)
 
 
 def get_resource_config(target=False):
     """Get the cloudify.nodes.terraform.Module resource_config"""
-    instance = get_ctx_instance(target=target)
-    resource_config = instance.runtime_properties.get('resource_config')
-    if not resource_config or ctx.workflow_id == 'install':
-        node = get_ctx_node(target=target)
-        resource_config = node.properties.get('resource_config', {})
-    return resource_config
+    return get_stored_property(ctx, 'resource_config', target)
 
 
 def get_provider_upgrade(target=False):
@@ -350,7 +358,7 @@ def get_terraform_source_material(target=False):
     if not terraform_source:
         terraform_source = update_terraform_source_material(
             source, target=target)
-    instance.runtime_properties['resource_config'] = resource_config
+    update_resource_config(resource_config)
     return terraform_source
 
 

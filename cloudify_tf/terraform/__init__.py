@@ -68,6 +68,7 @@ class Terraform(CliTool):
 
         backend = backend or {}
         provider = provider or {}
+        variables = variables or {}
         required_providers = required_providers or {}
 
         self.tool_name = 'Terraform'
@@ -121,6 +122,10 @@ class Terraform(CliTool):
         return self._flags
 
     @property
+    def insecure_env(self):
+        return utils.convert_secrets(self._env)
+
+    @property
     def env(self):
         return self._env
 
@@ -131,6 +136,10 @@ class Terraform(CliTool):
             self._env.update(new_value)
         else:
             self._env = new_value
+
+    @property
+    def insecure_variables(self):
+        return utils.convert_secrets(self._variables)
 
     @property
     def variables(self):
@@ -218,7 +227,7 @@ class Terraform(CliTool):
             command,
             self.logger,
             self.root_module,
-            self.env,
+            self.insecure_env,
             self.additional_args,
             return_output=return_output)
 
@@ -257,7 +266,7 @@ class Terraform(CliTool):
                                              delete=False,
                                              mode="w",
                                              dir=self.root_module) as f:
-                json.dump(self.variables, f)
+                json.dump(self.insecure_variables, f)
                 f.close()
                 command.extend(['-var-file', f.name])
                 yield
@@ -616,7 +625,7 @@ def setup_config_tf(ctx,
                     **_):
     if ctx.operation.name != CREATE_OP:
         if tf.terraform_outdated:
-            ctx.logger.error(
+            ctx.logger.info(
                 'Your terraform version {} is outdated. '
                 'Please update.'.format(tf.terraform_version))
 
