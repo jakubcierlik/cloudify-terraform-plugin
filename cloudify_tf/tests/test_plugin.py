@@ -21,6 +21,7 @@ from tempfile import mkdtemp
 from contextlib import contextmanager
 
 from cloudify.state import current_ctx
+from cloudify.exceptions import CloudifyClientError
 from cloudify.mocks import (MockContext, MockCloudifyContext,
                             MockNodeInstanceContext,
                             MockNodeContext)
@@ -95,6 +96,8 @@ class TestPlugin(TestBase):
             },
         }
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.tasks.get_node_instance_dir',
            return_value=test_dir1)
     @patch('cloudify_tf.utils.get_node_instance_dir',
@@ -121,6 +124,8 @@ class TestPlugin(TestBase):
             ctx.instance.runtime_properties.get("plugins_dir"),
             conf.get("terraform_config").get("plugins_dir"))
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.utils.get_node_instance_dir',
            return_value=test_dir2)
     @patch('cloudify_tf.tasks.get_node_instance_dir',
@@ -160,6 +165,8 @@ class TestPlugin(TestBase):
             ctx.source.instance.runtime_properties.get("executable_path"),
             ctx.target.instance.runtime_properties.get("executable_path"))
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.utils._unzip_archive')
     @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
@@ -196,6 +203,8 @@ class TestPlugin(TestBase):
             self.assertEqual(ctx.instance.runtime_properties['outputs'],
                              tf_output)
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.utils._unzip_archive')
     @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
@@ -230,6 +239,8 @@ class TestPlugin(TestBase):
             self.assertEqual(ctx.instance.runtime_properties['outputs'],
                              tf_output)
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.terraform.terratag.Terratag.execute')
     @patch('cloudify_tf.terraform.terratag.Terratag.executable_path')
@@ -253,6 +264,8 @@ class TestPlugin(TestBase):
         self.assertEqual(t.env,
                          {'true': 'true', 'false': 'false', 'null': 'null'})
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.terraform.tools_base.TFTool.install_binary')
     @patch('cloudify_tf.terraform.Terraform.version')
     @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
@@ -325,6 +338,8 @@ class TestPlugin(TestBase):
         mock_tflint_validate.assert_called_once()
         self.assertEqual(mock_tflint_export.call_count, 2)
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.terraform.terratag.Terratag.execute')
     @patch('cloudify_tf.terraform.Terraform.init')
     @patch('cloudify_tf.terraform.Terraform.plan_and_show')
@@ -386,6 +401,8 @@ class TestPlugin(TestBase):
         apply(ctx=ctx)
         mock_tflint.assert_called()
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.terraform.terratag.Terratag.execute')
     @patch('cloudify_tf.terraform.Terraform.init')
     @patch('cloudify_tf.terraform.Terraform.plan_and_show')
@@ -429,6 +446,8 @@ class TestPlugin(TestBase):
         apply(ctx=ctx)
         mock_tfsec.assert_called()
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.utils._unzip_archive')
     @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
@@ -502,6 +521,8 @@ class TestPlugin(TestBase):
                 'has no drifts.'.format(ctx.instance.id)
             )
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.terraform.terratag.Terratag.executable_path')
     @patch('cloudify_tf.terraform.Terraform.set_plugins_dir')
     @patch('cloudify_tf.terraform.Terraform.version')
@@ -536,6 +557,8 @@ class TestPlugin(TestBase):
         expected = '-var-file={}'.format(tfvars_mock)
         self.assertTrue(expected in result)
 
+    @patch('cloudify_common_sdk.utils.get_rest_client',
+          side_effect=CloudifyClientError)
     @patch('cloudify_tf.utils._unzip_archive')
     @patch('cloudify_tf.utils.copy_directory')
     @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
