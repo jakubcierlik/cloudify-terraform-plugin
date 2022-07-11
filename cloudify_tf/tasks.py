@@ -91,7 +91,9 @@ def infracost(ctx, tf, infracost_config, **_):
     new_config_infracost = update_dict_values(
         original_infracost_config, infracost_config)
     tf.infracost = Infracost.from_ctx(ctx, new_config_infracost,
-                                      tf.variables, tf.env, tf.tfvars)
+                                      tf.insecure_variables,
+                                      tf.insecure_env,
+                                      tf.tfvars)
     result, json_result = tf.run_infracost()
     ctx.instance.runtime_properties['infracost'] = json_result
     ctx.instance.runtime_properties['plain_text_infracost'] = result
