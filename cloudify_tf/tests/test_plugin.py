@@ -532,9 +532,6 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.utils.get_executable_path')
     @patch('cloudify_tf.terraform.utils.get_plugins_dir')
     @patch('cloudify_tf.terraform.utils.get_provider_upgrade')
-    @patch('cloudify_tf.terraform.utils.get_executable_path')
-    @patch('cloudify_tf.terraform.utils.get_executable_path')
-    @patch('cloudify_tf.terraform.utils.get_executable_path')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_apply_tf_vars(self, mock_resource_config, *_):
         _conf = self.get_terraform_module_conf_props(test_dir3)
