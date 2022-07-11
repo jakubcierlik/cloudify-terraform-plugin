@@ -2,7 +2,6 @@ from functools import wraps
 
 from .terraform import Terraform
 from .utils import (is_using_existing,
-                    get_resource_config,
                     get_terraform_source)
 
 CREATE_OP = 'cloudify.interfaces.lifecycle.create'
