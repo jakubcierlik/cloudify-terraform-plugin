@@ -206,7 +206,7 @@ data_types:
         required: false
       config:
         description: |
-          Configuration for terragrunt. It can be a list of strings or a list of dicts.
+          Configuration for tflint. It can be a list of strings or a list of dicts.
           # If a list of dicts are provided,
           # they should be in a format: type_name, option_name, option_value.
           # This will be translated to HCL.
