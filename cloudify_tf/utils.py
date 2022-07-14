@@ -215,23 +215,28 @@ def _file_to_base64(file_path):
 def _create_source_path(source_tmp_path):
     # didn't download anything so check the provided path
     # if file and absolute path or not
+    delete_tmp = False
     if not os.path.isabs(source_tmp_path):
         # bundled and need to be downloaded from blueprint
         source_tmp_path = ctx.download_resource(source_tmp_path)
+        delete_tmp = True
 
+    # only allow delete if we downloaded a bundled archive not local archives
     if os.path.isfile(source_tmp_path):
         file_name = source_tmp_path.rsplit('/', 1)[1]
         file_type = file_name.rsplit('.', 1)[1]
         # check type
         if file_type == 'zip':
             unzipped_source = unzip_archive(source_tmp_path, False)
-            os.remove(source_tmp_path)
+            if delete_tmp:
+                os.remove(source_tmp_path)
             source_tmp_path = unzipped_source
         elif file_type in TAR_FILE_EXTENSTIONS:
             unzipped_source = untar_archive(source_tmp_path, False)
-            os.remove(source_tmp_path)
+            if delete_tmp:
+                os.remove(source_tmp_path)
             source_tmp_path = unzipped_source
-    return source_tmp_path
+    return source_tmp_path, delete_tmp
 
 
 def is_using_existing(target=True):
@@ -319,10 +324,7 @@ def update_terraform_source_material(new_source, target=False):
     ctx.logger.debug('Source temp path {}'.format(source_tmp_path))
     # check if we actually downloaded something or not
     if source_tmp_path == new_source_location:
-        new_tmp_path = _create_source_path(source_tmp_path)
-        if new_tmp_path == source_tmp_path:
-            delete_tmp = False
-        source_tmp_path = new_tmp_path
+        source_tmp_path, delete_tmp = _create_source_path(source_tmp_path)
     # move tmp files to correct directory
     copy_directory(source_tmp_path, node_instance_dir)
     # By getting here we will have extracted source
