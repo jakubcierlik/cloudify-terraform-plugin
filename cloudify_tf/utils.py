@@ -766,9 +766,12 @@ def filter_state_for_sensitive_properties(output):
     resource_config = get_resource_config(target=False)
     ret = dict()
     for k in output.keys():
-        if (output[k].get("sensitive", False) and resource_config['obfuscate_sensitive']) or \
-                (output[k].get("sensitive", False) and k in resource_config['update_secrets']):
-            # if (sensitive and obfuscate_sensitive) or ( sensitive and in update_secrets)
+        is_sensitive_ouput = output[k].get("sensitive", False)
+        obfuscate_sensitive = resource_config.get('obfuscate_sensitive')
+        is_in_store_output_secrets = \
+            k in resource_config.get('store_output_secrets', {})
+        if (is_sensitive_ouput and obfuscate_sensitive) or \
+                (is_sensitive_ouput and is_in_store_output_secrets):
             ret[k] = "*" * 10
         else:
             ret[k] = output[k]
@@ -778,8 +781,11 @@ def filter_state_for_sensitive_properties(output):
 def store_sensitive_properties(output):
     resource_config = get_resource_config(target=False)
     secrets_manager = get_rest_client(api_token=ctx.rest_token).secrets
-    for secret in resource_config.get("update_secrets", {}).keys():
-        secrets_manager.update(secret, output[resource_config['update_secrets'][secret]])
+    store_output_secrets = resource_config.get("store_output_secrets", {})
+    for secret in store_output_secrets.keys():
+        secrets_manager.create(key=secret,
+                               value=output[store_output_secrets.get(secret)],
+                               update_if_exists=True)
 
 
 def refresh_resources_properties(state, output):
@@ -794,7 +800,8 @@ def refresh_resources_properties(state, output):
     ctx.instance.runtime_properties['resources'] = resources
     # Duplicate for backward compatibility.
     ctx.instance.runtime_properties[STATE] = resources
-    ctx.instance.runtime_properties['outputs'] = filter_state_for_sensitive_properties(output)
+    ctx.instance.runtime_properties['outputs'] = \
+        filter_state_for_sensitive_properties(output)
     store_sensitive_properties(output)
 
 

@@ -165,6 +165,12 @@ data_types:
         type: string
         description: file Name .tfvars
         required: false
+      store_output_secrets:
+        type: dict
+        description: add/update secrets from terraform senstive outputs.
+      obfuscate_sensitive:
+        type: boolean
+        default: false
 
 
   cloudify.types.terraform.tfsec:

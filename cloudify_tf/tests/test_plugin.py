@@ -175,6 +175,7 @@ class TestPlugin(TestBase):
            return_value=test_dir3)
     @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
            return_value=False)
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_apply_no_output(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
@@ -211,6 +212,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
     @patch('cloudify_tf.utils.get_node_instance_dir',
            return_value=test_dir3)
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_apply_with_output(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
@@ -223,7 +225,10 @@ class TestPlugin(TestBase):
 
         tf_pulled_resources = {'resources': [{'name': 'eip',
                                               'value': '10.0.0.1'}]}
-        tf_output = {'elastic_ip': '10.0.0.1'}
+        tf_output = tf_output = {'elastic_ip': {
+            'senstive': False,
+            'elastic_ip': '10.0.0.1'
+        }}
         mock_tf_apply = Mock()
         mock_tf_apply.init.return_value = 'terraform initialized folder'
         mock_tf_apply.plan.return_value = 'terraform plan'
@@ -241,6 +246,52 @@ class TestPlugin(TestBase):
             self.assertEqual(ctx.instance.runtime_properties['outputs'],
                              tf_output)
 
+    # @patch('cloudify_tf.utils._unzip_archive')
+    # @patch('cloudify_tf.utils.copy_directory')
+    # @patch('cloudify_tf.utils.get_terraform_state_file', return_value=False)
+    # @patch('cloudify_tf.utils.get_cloudify_version', return_value="6.1.0")
+    # @patch('cloudify_tf.utils.get_node_instance_dir',
+    #        return_value=test_dir3)
+    # @patch('cloudify_tf.utils.get_resource_config')
+    # def test_apply_with_sensitive_output(self, mock_resource_config, *_):
+    #     conf = self.get_terraform_module_conf_props(test_dir3)
+    #     conf['resource_config']['obfuscate_sensitive'] = True
+    #     ctx = self.mock_ctx("test_apply_with_sensitive_output", conf)
+    #     mock_resource_config.return_value = conf.get('resource_config')
+    #     current_ctx.set(ctx=ctx)
+    #     kwargs = {
+    #         'ctx': ctx
+    #     }
+    #
+    #     tf_pulled_resources = {'resources': [{'name': 'eip',
+    #                                           'value': '10.0.0.1'}]}
+    #     tf_output = {'elastic_ip': {
+    #         'senstive': True,
+    #         'elastic_ip': '10.0.0.1'
+    #     }}
+    #
+    #     mock_tf_apply = Mock()
+    #     mock_tf_apply.init.return_value = 'terraform initialized folder'
+    #     mock_tf_apply.plan.return_value = 'terraform plan'
+    #     mock_tf_apply.apply.return_value = 'terraform executing'
+    #     mock_tf_apply.state_pull.return_value = tf_pulled_resources
+    #     mock_tf_apply.show.return_value = tf_pulled_resources
+    #     mock_tf_apply.output.return_value = tf_output
+    #
+    #     tf_output_obfuscated = {'elastic_ip': {
+    #         'senstive': True,
+    #         'elastic_ip': '**********'
+    #     }}
+    #
+    #     with patch('cloudify_tf.terraform.Terraform.from_ctx',
+    #                return_value=mock_tf_apply):
+    #         apply(**kwargs)
+    #         self.assertTrue(mock_tf_apply.show.called)
+    #         self.assertEqual(ctx.instance.runtime_properties['resources'],
+    #                     {'eip': tf_pulled_resources.get('resources')[0]})
+    #         self.assertEqual(ctx.instance.runtime_properties['outputs'],
+    #                          tf_output_obfuscated)
+
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.terraform.terratag.Terratag.execute')
     @patch('cloudify_tf.terraform.terratag.Terratag.executable_path')
@@ -250,6 +301,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.utils.get_plugins_dir')
     @patch('cloudify_common_sdk.utils.install_binary', suffix='tf.zip')
     @patch('cloudify_tf.utils.dump_file')
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_env_vars(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
@@ -270,6 +322,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.Terraform.version')
     @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
     @patch('cloudify_tf.decorators.get_terraform_source')
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.terraform.tflint.TFLint.validate')
     @patch('cloudify_tf.terraform.tflint.TFLint.export_config')
     @patch('cloudify_tf.terraform.tfsec.TFSec.validate')
@@ -355,6 +408,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.Terraform.version')
     @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
     @patch('cloudify_tf.decorators.get_terraform_source')
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.terraform.Terraform.runtime_file')
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
@@ -419,6 +473,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.Terraform.version')
     @patch('cloudify_tf.terraform.utils.get_binary_location_from_rel')
     @patch('cloudify_tf.decorators.get_terraform_source')
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.terraform.Terraform.runtime_file')
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch('cloudify_tf.utils.get_node_instance_dir')
@@ -459,6 +514,7 @@ class TestPlugin(TestBase):
            return_value=test_dir3)
     @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
            return_value=False)
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_check_drift(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
@@ -532,6 +588,7 @@ class TestPlugin(TestBase):
     @patch('cloudify_tf.terraform.utils.get_executable_path')
     @patch('cloudify_tf.terraform.utils.get_plugins_dir')
     @patch('cloudify_tf.terraform.utils.get_provider_upgrade')
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_apply_tf_vars(self, mock_resource_config, *_):
         _conf = self.get_terraform_module_conf_props(test_dir3)
@@ -567,6 +624,7 @@ class TestPlugin(TestBase):
            return_value=test_dir3)
     @patch('cloudify_tf.terraform.Terraform.terraform_outdated',
            return_value=False)
+    @patch('cloudify_tf.utils.store_sensitive_properties')
     @patch('cloudify_tf.utils.get_resource_config')
     def test_import_resource(self, mock_resource_config, *_):
         conf = self.get_terraform_module_conf_props(test_dir3)
