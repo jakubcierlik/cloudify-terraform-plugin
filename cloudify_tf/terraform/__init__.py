@@ -222,7 +222,9 @@ class Terraform(CliTool):
         return final_flags
 
     def execute(self, command, return_output=None):
-        return_output = return_output or self._log_stdout
+        return_output = return_output if return_output is not None \
+            else self._log_stdout
+        self.additional_args['log_stdout'] = return_output
         return run_subprocess(
             command,
             self.logger,
