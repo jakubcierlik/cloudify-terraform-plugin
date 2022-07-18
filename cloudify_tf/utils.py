@@ -22,6 +22,7 @@ import shutil
 import zipfile
 import filecmp
 import tempfile
+
 import requests
 import threading
 from io import BytesIO
@@ -34,6 +35,7 @@ from pathlib import Path
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
+from cloudify.manager import get_rest_client
 from cloudify_common_sdk.hcl import (
     convert_json_hcl,
     extract_hcl_from_dict,
@@ -760,6 +762,26 @@ def create_provider_string(items):
     return provider
 
 
+def filter_state_for_sensitive_properties(output):
+    resource_config = get_resource_config(target=False)
+    ret = dict()
+    for k in output.keys():
+        if (output[k].get("sensitive", False) and resource_config['obfuscate_sensitive']) or \
+                (output[k].get("sensitive", False) and k in resource_config['update_secrets']):
+            # if (sensitive and obfuscate_sensitive) or ( sensitive and in update_secrets)
+            ret[k] = "*" * 10
+        else:
+            ret[k] = output[k]
+    return ret
+
+
+def store_sensitive_properties(output):
+    resource_config = get_resource_config(target=False)
+    secrets_manager = get_rest_client(api_token=ctx.rest_token).secrets
+    for secret in resource_config.get("update_secrets", {}).keys():
+        secrets_manager.update(secret, output[resource_config['update_secrets'][secret]])
+
+
 def refresh_resources_properties(state, output):
     """Store all the resources (state and output) that we created as JSON
        in the context."""
@@ -772,7 +794,8 @@ def refresh_resources_properties(state, output):
     ctx.instance.runtime_properties['resources'] = resources
     # Duplicate for backward compatibility.
     ctx.instance.runtime_properties[STATE] = resources
-    ctx.instance.runtime_properties['outputs'] = output
+    ctx.instance.runtime_properties['outputs'] = filter_state_for_sensitive_properties(output)
+    store_sensitive_properties(output)
 
 
 def refresh_resources_drifts_properties(plan_json):
